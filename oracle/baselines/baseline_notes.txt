@@ -1,0 +1,30 @@
+Implemented baselines (high level)
+=================================
+
+1) Sliding window trajectory truncation
+- Added token-budget presets for 4K, 8K, and 16K.
+- Trajectories are serialized into a stable line format:
+  "Step {t}: thought=... | action=... | observation=..."
+- The truncation keeps the most recent suffix of whole steps whose serialized
+  token count is within W. It never splits a step.
+- If even the last step exceeds W by itself, the full last step is still kept
+  and this overflow is flagged in metadata.
+
+2) Observation masking baseline
+- Replaces observation text with a short placeholder while preserving thought
+  and action exactly.
+- Supports:
+  - mask_mode="all": mask every observation
+  - mask_mode="keep_last": keep only the latest observation unmasked
+- Uses deep-copy behavior so input trajectories are not mutated.
+
+3) Composition and evaluation support
+- Added two explicit composition orders:
+  - mask then window
+  - window then mask
+- Returned metadata includes dropped prefix count, final token count, encoding,
+  and overflow flag for reproducible experiments.
+
+4) Test coverage
+- Unit tests validate serialization format, masking invariants, step-boundary
+  truncation behavior, edge cases, and composition helpers.
