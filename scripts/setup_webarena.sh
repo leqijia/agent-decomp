@@ -78,12 +78,12 @@ step "WebArena setup starting (host=$HOSTNAME)"
 log "Log file: $LOG_FILE"
 
 # ---------- 1. apt updates + basic tools ----------
-step "1/7  Installing base packages"
+step "1/8  Installing base packages"
 sudo apt-get update -y
 sudo apt-get install -y curl wget ca-certificates gnupg lsb-release jq
 
 # ---------- 2. install Docker ----------
-step "2/7  Installing Docker"
+step "2/8  Installing Docker"
 if command -v docker >/dev/null 2>&1; then
   log "Docker already installed ($(docker --version)), skipping."
 else
@@ -111,8 +111,10 @@ fi
 DOCKER="sudo docker"
 $DOCKER --version
 
-# ---------- 3. download small image tarballs ----------
-step "3/7  Downloading small image tarballs to $IMAGES_DIR"
+# ---------- 3. interleaved download→load→delete for small images ----------
+# Processing one image at a time keeps peak disk low: only one tarball
+# exists on disk at any moment, and we delete it immediately after load.
+step "3/8  Downloading + loading small images (shopping / shopping_admin / forum)"
 mkdir -p "$IMAGES_DIR"
 cd "$IMAGES_DIR"
 
@@ -127,36 +129,41 @@ for i in "${!SMALL_TARBALLS[@]}"; do
     continue
   fi
 
+  # Download (resumable via wget -c if a .partial exists from a prior run)
   if [[ -f "$tarball" ]]; then
-    log "Tarball $tarball already present, skipping download."
+    log "Tarball $tarball already present, reusing."
   else
     log "Downloading $tarball ..."
     wget --tries=3 --timeout=60 -c "$MIRROR/$tarball" -O "$tarball.partial"
     mv "$tarball.partial" "$tarball"
   fi
-done
 
-# ---------- 4a. load small images into Docker, delete tarballs to reclaim disk ----------
-step "4a/7  Loading small images (shopping / shopping_admin / forum)"
-for i in "${!SMALL_TARBALLS[@]}"; do
-  tarball="${SMALL_TARBALLS[$i]}"
-  image="${SMALL_IMAGES[$i]}"
-  if $DOCKER image inspect "$image" >/dev/null 2>&1; then
-    log "Image '$image' already loaded, skipping."
-    rm -f "$tarball"
-    continue
-  fi
+  # Free disk sanity check before load
+  free_gb=$(df --output=avail -BG / | tail -1 | tr -dc '0-9')
+  log "Free disk before loading $image: ${free_gb} GB"
+
   log "Loading $tarball ..."
   $DOCKER load --input "$tarball"
-  log "Removing $tarball to reclaim disk."
+
+  log "Deleting $tarball (image is now in Docker)"
   rm -f "$tarball"
 done
 
-# ---------- 4b. stream-load GitLab (~50 GB, doesn't fit on disk as tar + loaded) ----------
-step "4b/7  Stream-loading GitLab directly into Docker (no tar on disk)"
+step "4/8  Small images loaded"
+
+# ---------- 5. stream-load GitLab (~50 GB, doesn't fit on disk as tar + loaded) ----------
+step "5/8  Stream-loading GitLab directly into Docker (no tar on disk)"
 if $DOCKER image inspect "$GITLAB_IMAGE" >/dev/null 2>&1; then
   log "GitLab image '$GITLAB_IMAGE' already loaded, skipping."
 else
+  free_gb=$(df --output=avail -BG / | tail -1 | tr -dc '0-9')
+  log "Free disk before GitLab stream-load: ${free_gb} GB"
+  if [[ "$free_gb" -lt 70 ]]; then
+    echo "ERROR: need at least 70 GB free before GitLab stream-load, have ${free_gb} GB."
+    echo "Free up space or resize the disk, then rerun."
+    exit 1
+  fi
+
   log "Streaming $GITLAB_TAR from $MIRROR directly into 'docker load'"
   log "This is ~50 GB and takes ~15-25 min. No resume if it fails — we retry."
   # wget streams to stdout, docker load reads from stdin.
@@ -170,7 +177,7 @@ log "Images currently loaded:"
 $DOCKER image ls | grep -E "shopping|gitlab|postmill" || true
 
 # ---------- 5. start containers ----------
-step "5/7  Starting containers"
+step "6/8  Starting containers"
 
 # Helper: (re)start a container only if not already running
 ensure_container() {
@@ -199,7 +206,7 @@ log "Waiting 60s for Shopping/Admin/Forum to warm up ..."
 sleep 60
 
 # ---------- 6. configure services with the public hostname ----------
-step "6/7  Configuring services for host=$HOSTNAME"
+step "7/8  Configuring services for host=$HOSTNAME"
 
 log "Configuring Shopping (Magento base URL)"
 $DOCKER exec shopping /var/www/magento2/bin/magento setup:store-config:set \
@@ -236,7 +243,7 @@ $DOCKER exec gitlab sed -i \
 $DOCKER exec gitlab gitlab-ctl reconfigure
 
 # ---------- 7. health check ----------
-step "7/7  Health check"
+step "8/8  Health check"
 sleep 5
 
 check_url() {
