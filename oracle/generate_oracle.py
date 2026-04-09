@@ -71,10 +71,47 @@ def build_prompt(task_goal, trajectory, dom, t, version="v2"):
     )
 
 
+COST_LOG_PATH = os.path.join(os.path.dirname(__file__), "cost_log.json")
+
+INPUT_TOKEN_RATE = 0.000003   # $3 per 1M input tokens
+OUTPUT_TOKEN_RATE = 0.000015  # $15 per 1M output tokens
+
+
+def _load_cost_log():
+    if os.path.exists(COST_LOG_PATH):
+        with open(COST_LOG_PATH) as f:
+            return json.load(f)
+    return {
+        "total_calls": 0,
+        "total_input_tokens": 0,
+        "total_output_tokens": 0,
+        "total_cost_usd": 0.0,
+        "calls": []
+    }
+
+
+def _append_cost_log(trajectory_id, step, prompt_version, input_tokens, output_tokens, cost_usd):
+    log = _load_cost_log()
+    log["total_calls"] += 1
+    log["total_input_tokens"] += input_tokens
+    log["total_output_tokens"] += output_tokens
+    log["total_cost_usd"] = round(log["total_cost_usd"] + cost_usd, 6)
+    log["calls"].append({
+        "trajectory_id": trajectory_id,
+        "step": step,
+        "prompt_version": prompt_version,
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "cost_usd": cost_usd,
+    })
+    with open(COST_LOG_PATH, "w") as f:
+        json.dump(log, f, indent=2)
+
+
 def call_oracle(prompt, use_stub=True):
     if use_stub:
         print("[STUB] call_oracle called - returning fake response")
-        return json.dumps({
+        content = json.dumps({
             "g": "Find the cheapest laptop on the shopping site and add it to cart",
             "P_t": ["Navigated to shopping page", "Searched for laptops", "Sorted by price", "Selected cheapest laptop"],
             "R_t": ["Confirm cart and proceed to checkout"],
@@ -83,8 +120,8 @@ def call_oracle(prompt, use_stub=True):
             "F_t": [],
             "K_t": ["Cheapest laptop is Laptop A", "Price is $299", "Item is in stock"]
         }, indent=2)
+        return {"content": content, "input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
 
-    # real API call - uncomment when OpenRouter credits are available
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {API_KEY}",
@@ -98,7 +135,12 @@ def call_oracle(prompt, use_stub=True):
     try:
         response = requests.post(url, headers=headers, json=payload, timeout=30)
         response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"]
+        data = response.json()
+        content = data["choices"][0]["message"]["content"]
+        input_tokens = data["usage"]["prompt_tokens"]
+        output_tokens = data["usage"]["completion_tokens"]
+        cost_usd = round((input_tokens * INPUT_TOKEN_RATE) + (output_tokens * OUTPUT_TOKEN_RATE), 6)
+        return {"content": content, "input_tokens": input_tokens, "output_tokens": output_tokens, "cost_usd": cost_usd}
     except requests.exceptions.HTTPError as e:
         if response.status_code == 401:
             print("Error: Invalid API key.")
@@ -112,10 +154,12 @@ def call_oracle(prompt, use_stub=True):
         sys.exit(1)
 
 
-def save_output(trajectory_id, step, prompt_version, raw_response, output_dir=None):
+def save_output(trajectory_id, step, prompt_version, response_dict, output_dir=None):
     if output_dir is None:
         output_dir = os.path.join(os.path.dirname(__file__), "outputs")
     os.makedirs(output_dir, exist_ok=True)
+
+    raw_response = response_dict["content"]
 
     # try to parse as JSON, fall back to raw string
     try:
@@ -127,12 +171,22 @@ def save_output(trajectory_id, step, prompt_version, raw_response, output_dir=No
         "trajectory_id": trajectory_id,
         "step": step,
         "prompt_version": prompt_version,
+        "input_tokens": response_dict["input_tokens"],
+        "output_tokens": response_dict["output_tokens"],
+        "cost_usd": response_dict["cost_usd"],
         "raw_response": raw_response,
-        "parsed": parsed
+        "parsed": parsed,
     }
     path = os.path.join(output_dir, f"{trajectory_id}_t{step}.json")
     with open(path, "w") as f:
         json.dump(output, f, indent=2)
+    # update cost log for real calls (stub calls have 0 tokens)
+    if response_dict["input_tokens"] > 0 or response_dict["output_tokens"] > 0:
+        _append_cost_log(trajectory_id, step, prompt_version,
+                         response_dict["input_tokens"],
+                         response_dict["output_tokens"],
+                         response_dict["cost_usd"])
+
     print(f"Saved to {path}")
     return path
 
@@ -147,12 +201,13 @@ if __name__ == "__main__":
 
     response = call_oracle(prompt, use_stub=False)
     print("=== ORACLE RESPONSE ===")
-    print(response)
+    print(response["content"])
+    print(f"[tokens: {response['input_tokens']} in / {response['output_tokens']} out | cost: ${response['cost_usd']}]")
     print("=======================\n")
 
     save_output(
         trajectory_id="dummy_task_001",
         step=5,
         prompt_version="v2",
-        raw_response=response
+        response_dict=response
     )

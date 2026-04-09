@@ -98,6 +98,27 @@ See quality_notes.md for field-level accuracy notes across versions.
 
 ---
 
+## Integration (Experiment 3)
+
+During live Experiment 3 runs, Adithya calls the oracle every k=3 steps
+to inject the current oracle state into the agent context.
+
+```python
+from oracle import build_prompt, call_oracle, save_output
+
+# called every k=3 steps during a live agent run
+prompt = build_prompt(task_goal, trajectory, live_dom, t)
+result = call_oracle(prompt, use_stub=False)
+oracle_state = result["content"]
+
+# save the output
+save_output(task_id, t, "v2", result, output_dir="outputs/")
+```
+
+Cost tracking is automatic — each real call appends to `oracle/cost_log.json`.
+
+---
+
 ## Who to contact
 
 Marlin — oracle pipeline, prompt templates, quality notes

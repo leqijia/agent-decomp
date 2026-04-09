@@ -2,29 +2,30 @@
   "trajectory_id": "dummy_task_001",
   "step": 5,
   "prompt_version": "v2",
-  "raw_response": "{\n  \"g\": \"Find the cheapest laptop on the shopping site and add it to cart\",\n  \"P_t\": [\n    \"Navigated to the shopping home page\",\n    \"Searched for laptops and retrieved 12 results\",\n    \"Sorted laptops by price ascending\",\n    \"Identified the cheapest laptop (Laptop A at $299) and navigated to its product page\",\n    \"Added Laptop A ($299) to the cart\"\n  ],\n  \"R_t\": [],\n  \"e_t\": \"The current page is the cart page. It contains one item: Laptop A priced at $299, with stock status 'In Stock'. A 'Checkout' button is present and available.\",\n  \"C\": [\n    \"The agent must not remove or replace the item already added to the cart unless instructed\",\n    \"The checkout button is available but the task goal does not require completing checkout\"\n  ],\n  \"F_t\": [],\n  \"K_t\": [\n    \"Laptop A is priced at $299 and was the first result after sorting by price, making it the cheapest laptop\",\n    \"Laptop A is confirmed as 'In Stock' per the ground-truth DOM\",\n    \"The cart currently contains 1 item: Laptop A at $299\",\n    \"A Checkout button is available on the cart page\",\n    \"12 laptops total were found in the search results\"\n  ]\n}",
+  "input_tokens": 853,
+  "output_tokens": 290,
+  "cost_usd": 0.006909,
+  "raw_response": "{\n  \"g\": \"Find the cheapest laptop on the shopping site and add it to cart\",\n  \"P_t\": [\n    \"Navigated to the shopping home page\",\n    \"Searched for laptops and retrieved 12 results\",\n    \"Sorted laptops by price ascending\",\n    \"Selected the cheapest laptop (Laptop A, $299)\",\n    \"Added Laptop A ($299) to the cart\"\n  ],\n  \"R_t\": [],\n  \"e_t\": \"The current page is the cart page. It contains one item: Laptop A priced at $299, with stock status 'In Stock'. A 'Checkout' button is present and available.\",\n  \"C\": [\n    \"The item must remain in the cart without being removed before checkout if the goal requires purchase completion\"\n  ],\n  \"F_t\": [],\n  \"K_t\": [\n    \"Laptop A is priced at $299 and is the cheapest among 12 laptops found\",\n    \"Laptop A is currently In Stock per the ground-truth DOM\",\n    \"The cart now contains 1 item: Laptop A at $299\",\n    \"A Checkout button is available on the cart page\"\n  ]\n}",
   "parsed": {
     "g": "Find the cheapest laptop on the shopping site and add it to cart",
     "P_t": [
       "Navigated to the shopping home page",
       "Searched for laptops and retrieved 12 results",
       "Sorted laptops by price ascending",
-      "Identified the cheapest laptop (Laptop A at $299) and navigated to its product page",
+      "Selected the cheapest laptop (Laptop A, $299)",
       "Added Laptop A ($299) to the cart"
     ],
     "R_t": [],
     "e_t": "The current page is the cart page. It contains one item: Laptop A priced at $299, with stock status 'In Stock'. A 'Checkout' button is present and available.",
     "C": [
-      "The agent must not remove or replace the item already added to the cart unless instructed",
-      "The checkout button is available but the task goal does not require completing checkout"
+      "The item must remain in the cart without being removed before checkout if the goal requires purchase completion"
     ],
     "F_t": [],
     "K_t": [
-      "Laptop A is priced at $299 and was the first result after sorting by price, making it the cheapest laptop",
-      "Laptop A is confirmed as 'In Stock' per the ground-truth DOM",
-      "The cart currently contains 1 item: Laptop A at $299",
-      "A Checkout button is available on the cart page",
-      "12 laptops total were found in the search results"
+      "Laptop A is priced at $299 and is the cheapest among 12 laptops found",
+      "Laptop A is currently In Stock per the ground-truth DOM",
+      "The cart now contains 1 item: Laptop A at $299",
+      "A Checkout button is available on the cart page"
     ]
   }
 }
