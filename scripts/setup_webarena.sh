@@ -46,18 +46,26 @@ LOG_FILE="$HOME/webarena-setup.log"
 
 MIRROR="http://metis.lti.cs.cmu.edu/webarena-images"
 
-# tarball name -> expected image tag after `docker load`
-# shopping / shopping_admin / forum are small enough (~10 GB each) to download
-# to disk then load. GitLab is ~50 GB and would need ~100 GB peak disk if we
-# did the same (tar + loaded image coexisting), so it's handled separately
-# by streaming the download directly into `docker load` (see below).
-declare -A IMAGES=(
-  ["shopping_final_0712.tar"]="shopping_final_0712"
-  ["shopping_admin_final_0719.tar"]="shopping_admin_final_0719"
-  ["postmill-populated-exposed-withimg.tar"]="postmill-populated-exposed-withimg"
+# Small images: downloaded-then-loaded. Deterministic iteration order matters,
+# so we use parallel indexed arrays instead of an associative array (bash
+# associative arrays are unordered, which bit us on the first run when GitLab
+# was iterated first and filled the disk before anything else loaded).
+#
+# GitLab is ~50 GB and would need ~100 GB peak disk if we did the same path
+# (tar + loaded image coexisting), so it's handled separately via streaming
+# wget | docker load (see step 4b below).
+SMALL_TARBALLS=(
+  "shopping_final_0712.tar"
+  "shopping_admin_final_0719.tar"
+  "postmill-populated-exposed-withimg.tar"
+)
+SMALL_IMAGES=(
+  "shopping_final_0712"
+  "shopping_admin_final_0719"
+  "postmill-populated-exposed-withimg"
 )
 
-# Streamed image: (image_tag, tarball_url)
+# Streamed image
 GITLAB_IMAGE="gitlab-populated-final-port8023"
 GITLAB_TAR="gitlab-populated-final-port8023.tar"
 
@@ -103,13 +111,14 @@ fi
 DOCKER="sudo docker"
 $DOCKER --version
 
-# ---------- 3. download image tarballs ----------
-step "3/7  Downloading image tarballs to $IMAGES_DIR"
+# ---------- 3. download small image tarballs ----------
+step "3/7  Downloading small image tarballs to $IMAGES_DIR"
 mkdir -p "$IMAGES_DIR"
 cd "$IMAGES_DIR"
 
-for tarball in "${!IMAGES[@]}"; do
-  image="${IMAGES[$tarball]}"
+for i in "${!SMALL_TARBALLS[@]}"; do
+  tarball="${SMALL_TARBALLS[$i]}"
+  image="${SMALL_IMAGES[$i]}"
 
   # Skip if image already loaded into Docker
   if $DOCKER image inspect "$image" >/dev/null 2>&1; then
@@ -122,15 +131,16 @@ for tarball in "${!IMAGES[@]}"; do
     log "Tarball $tarball already present, skipping download."
   else
     log "Downloading $tarball ..."
-    wget --show-progress -q -c "$MIRROR/$tarball" -O "$tarball.partial"
+    wget --tries=3 --timeout=60 -c "$MIRROR/$tarball" -O "$tarball.partial"
     mv "$tarball.partial" "$tarball"
   fi
 done
 
 # ---------- 4a. load small images into Docker, delete tarballs to reclaim disk ----------
 step "4a/7  Loading small images (shopping / shopping_admin / forum)"
-for tarball in "${!IMAGES[@]}"; do
-  image="${IMAGES[$tarball]}"
+for i in "${!SMALL_TARBALLS[@]}"; do
+  tarball="${SMALL_TARBALLS[$i]}"
+  image="${SMALL_IMAGES[$i]}"
   if $DOCKER image inspect "$image" >/dev/null 2>&1; then
     log "Image '$image' already loaded, skipping."
     rm -f "$tarball"
