@@ -19,7 +19,10 @@
 #
 # Prereqs:
 #   - Ubuntu 24.04 LTS, x86_64
-#   - At least 100 GB free disk
+#   - At least 100 GB free disk (128 GB total VM disk is the minimum with our
+#     stream-loading trick for GitLab; the naive "download tar then load" path
+#     would need 256 GB because GitLab alone is ~50 GB and would peak at
+#     ~100 GB during `docker load`)
 #   - At least 8 GB RAM (16 recommended)
 #   - Ports 7770, 7780, 8023, 9999 open in the VM's firewall/NSG
 #
@@ -44,12 +47,19 @@ LOG_FILE="$HOME/webarena-setup.log"
 MIRROR="http://metis.lti.cs.cmu.edu/webarena-images"
 
 # tarball name -> expected image tag after `docker load`
+# shopping / shopping_admin / forum are small enough (~10 GB each) to download
+# to disk then load. GitLab is ~50 GB and would need ~100 GB peak disk if we
+# did the same (tar + loaded image coexisting), so it's handled separately
+# by streaming the download directly into `docker load` (see below).
 declare -A IMAGES=(
   ["shopping_final_0712.tar"]="shopping_final_0712"
   ["shopping_admin_final_0719.tar"]="shopping_admin_final_0719"
   ["postmill-populated-exposed-withimg.tar"]="postmill-populated-exposed-withimg"
-  ["gitlab-populated-final-port8023.tar"]="gitlab-populated-final-port8023"
 )
+
+# Streamed image: (image_tag, tarball_url)
+GITLAB_IMAGE="gitlab-populated-final-port8023"
+GITLAB_TAR="gitlab-populated-final-port8023.tar"
 
 # ---------- logging ----------
 exec > >(tee -a "$LOG_FILE") 2>&1
@@ -117,8 +127,8 @@ for tarball in "${!IMAGES[@]}"; do
   fi
 done
 
-# ---------- 4. load images into Docker, delete tarballs to reclaim disk ----------
-step "4/7  Loading images into Docker"
+# ---------- 4a. load small images into Docker, delete tarballs to reclaim disk ----------
+step "4a/7  Loading small images (shopping / shopping_admin / forum)"
 for tarball in "${!IMAGES[@]}"; do
   image="${IMAGES[$tarball]}"
   if $DOCKER image inspect "$image" >/dev/null 2>&1; then
@@ -131,6 +141,20 @@ for tarball in "${!IMAGES[@]}"; do
   log "Removing $tarball to reclaim disk."
   rm -f "$tarball"
 done
+
+# ---------- 4b. stream-load GitLab (~50 GB, doesn't fit on disk as tar + loaded) ----------
+step "4b/7  Stream-loading GitLab directly into Docker (no tar on disk)"
+if $DOCKER image inspect "$GITLAB_IMAGE" >/dev/null 2>&1; then
+  log "GitLab image '$GITLAB_IMAGE' already loaded, skipping."
+else
+  log "Streaming $GITLAB_TAR from $MIRROR directly into 'docker load'"
+  log "This is ~50 GB and takes ~15-25 min. No resume if it fails — we retry."
+  # wget streams to stdout, docker load reads from stdin.
+  # --tries=3 for a bit of resilience against transient CMU hiccups.
+  wget --tries=3 --timeout=60 -q -O - "$MIRROR/$GITLAB_TAR" \
+    | sudo docker load
+  log "GitLab streamed in successfully."
+fi
 
 log "Images currently loaded:"
 $DOCKER image ls | grep -E "shopping|gitlab|postmill" || true
