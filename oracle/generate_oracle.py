@@ -145,7 +145,7 @@ if __name__ == "__main__":
     print(prompt[:1200])
     print("==========================================\n")
 
-    response = call_oracle(prompt, use_stub=True)
+    response = call_oracle(prompt, use_stub=False)
     print("=== ORACLE RESPONSE ===")
     print(response)
     print("=======================\n")
