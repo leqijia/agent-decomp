@@ -1,103 +1,137 @@
-import json
 import os
 import sys
 
-# baselines/ lives at the repo root; add the root to sys.path so it imports cleanly
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from baselines.trajectory import (
-    sliding_window_truncate,
-    mask_observations,
-    serialize_trajectory,
-    count_tokens,
-)
 
-VALID_CONDITIONS = {
-    "raw",
-    "oracle",
-    "self_generated",
-    "env_only",
-    "sliding_window",
-    "observation_masking",
-}
-
-
-def run_condition(trajectory_path, condition, task_id, window_size=4000):
-    """
-    Run a single trajectory under a given experimental condition.
-
-    Args:
-        trajectory_path: path to the trajectory .json file
-        condition: one of VALID_CONDITIONS
-        task_id: string identifier for the task
-        window_size: max tokens for sliding_window condition (4000, 8000, or 16000)
-
-    Returns:
-        {"task_id": str, "condition": str, "success": None, "tokens_used": int, "dropped_steps": int}
-    """
-    with open(trajectory_path) as f:
-        data = json.load(f)
-    steps = data["steps"]
-
-    if condition == "sliding_window":
-        result = sliding_window_truncate(steps, max_tokens=window_size)
-        tokens_used = result.trajectory_token_count
-        dropped_steps = result.dropped_prefix_steps
-
-    elif condition == "observation_masking":
-        masked = mask_observations(steps)
-        serialized = serialize_trajectory(masked)
-        tokens_used = count_tokens(serialized)
-        dropped_steps = 0
-
-    elif condition in ("raw", "oracle", "self_generated", "env_only"):
-        raise NotImplementedError("Pending Rocky's interface spec")
-
+def _length_bin(total_steps: int) -> str:
+    if total_steps <= 10:
+        return "<=10"
+    elif total_steps <= 20:
+        return "11-20"
+    elif total_steps <= 40:
+        return "21-40"
+    elif total_steps <= 80:
+        return "41-80"
     else:
-        raise ValueError(f"Unknown condition: {condition!r}. Must be one of {VALID_CONDITIONS}")
-
-    return {
-        "task_id": task_id,
-        "condition": condition,
-        "success": None,
-        "tokens_used": tokens_used,
-        "dropped_steps": dropped_steps,
-    }
+        return ">80"
 
 
-def evaluate_batch(trajectory_dir, condition):
+def run_episode(
+    condition: str,
+    config_file: str,
+    *,
+    model: str = "qwen/Qwen3.5-27B",
+    max_steps: int = 30,
+    max_obs_length: int = 1920,
+    temperature: float = 0.0,
+    window_size: int | None = None,
+    oracle_regen_every_k: int | None = None,
+    out_path: str | None = None,
+) -> dict:
     """
-    Run run_condition on all .json files in trajectory_dir.
-
-    Args:
-        trajectory_dir: path to directory containing trajectory .json files
-        condition: one of VALID_CONDITIONS
+    Run a single episode under a given experimental condition.
 
     Returns:
-        list of run_condition result dicts
+        dict with task_id, condition, success, tokens_used, eval_score, total_steps
     """
     raise NotImplementedError("Pending Rocky's interface spec")
 
 
-def compute_metrics(results):
+def run_intervention(
+    trajectory_path: str,
+    t_star: int,
+    replacement_context: str,
+    *,
+    model: str = "qwen/Qwen3.5-27B",
+    out_path: str | None = None,
+) -> dict:
     """
-    Compute aggregate metrics from a list of run_condition outputs.
-
-    Args:
-        results: list of dicts, each with keys: task_id, condition, success, tokens_used
+    Re-run a trajectory from step t_star with a replacement context injected.
 
     Returns:
-        {"success_rate": float, "avg_tokens": float}
+        dict with task_id, condition, success, tokens_used, eval_score, total_steps
+    """
+    raise NotImplementedError("Pending Rocky's interface spec")
+
+
+def evaluate_batch(
+    condition: str,
+    config_files: list[str],
+    *,
+    out_dir: str,
+    **kwargs,
+) -> list[dict]:
+    """
+    Run run_episode on all config files for a given condition.
+
+    Returns:
+        list of run_episode result dicts
+    """
+    raise NotImplementedError("Pending Rocky's interface spec")
+
+
+def compute_metrics(results: list[dict]) -> dict:
+    """
+    Compute aggregate metrics from a list of run_episode outputs.
+
+    Args:
+        results: list of dicts with keys: task_id, condition, success, tokens_used,
+                 and optionally eval_score (float) and total_steps (int)
+
+    Returns:
+        {
+            "success_rate": float,
+            "avg_tokens": float,
+            "avg_eval_score": float,
+            "by_length_bin": {bin: {"success_rate": float, "avg_eval_score": float, "count": int}}
+        }
     """
     if not results:
-        return {"success_rate": 0.0, "avg_tokens": 0.0}
+        return {
+            "success_rate": 0.0,
+            "avg_tokens": 0.0,
+            "avg_eval_score": 0.0,
+            "by_length_bin": {},
+        }
 
-    scored = [r for r in results if r["success"] is not None]
-    if scored:
-        success_rate = round(sum(1 for r in scored if r["success"]) / len(scored), 3)
-    else:
-        success_rate = 0.0
+    # overall success_rate — skip None
+    scored = [r for r in results if r.get("success") is not None]
+    success_rate = round(sum(1 for r in scored if r["success"]) / len(scored), 3) if scored else 0.0
 
     avg_tokens = round(sum(r["tokens_used"] for r in results) / len(results), 1)
 
-    return {"success_rate": success_rate, "avg_tokens": avg_tokens}
+    # avg_eval_score — skip None
+    eval_scored = [r["eval_score"] for r in results if r.get("eval_score") is not None]
+    avg_eval_score = round(sum(eval_scored) / len(eval_scored), 3) if eval_scored else 0.0
+
+    # by_length_bin
+    bins: dict[str, list[dict]] = {}
+    for r in results:
+        total_steps = r.get("total_steps")
+        if total_steps is None:
+            continue
+        bin_key = _length_bin(total_steps)
+        bins.setdefault(bin_key, []).append(r)
+
+    by_length_bin = {}
+    for bin_key, bin_results in bins.items():
+        bin_scored = [r for r in bin_results if r.get("success") is not None]
+        bin_success_rate = (
+            round(sum(1 for r in bin_scored if r["success"]) / len(bin_scored), 3)
+            if bin_scored else 0.0
+        )
+        bin_eval = [r["eval_score"] for r in bin_results if r.get("eval_score") is not None]
+        bin_avg_eval = round(sum(bin_eval) / len(bin_eval), 3) if bin_eval else 0.0
+        by_length_bin[bin_key] = {
+            "success_rate": bin_success_rate,
+            "avg_eval_score": bin_avg_eval,
+            "count": len(bin_results),
+        }
+
+    return {
+        "success_rate": success_rate,
+        "avg_tokens": avg_tokens,
+        "avg_eval_score": avg_eval_score,
+        "by_length_bin": by_length_bin,
+    }
