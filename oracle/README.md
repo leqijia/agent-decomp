@@ -91,8 +91,11 @@ reproducible.
 
 Current versions:
 - v1: baseline prompt, free text output
-- v2: added DOM grounding rules, empty field handling, step anchor, 
+- v2: added DOM grounding rules, empty field handling, step anchor,
       oracle access framing
+- v3: fixed P_t regression under repetitive failure loops — P_t now
+      explicitly scans entire trajectory so early progress is not
+      forgotten during long failure sequences (default)
 
 See quality_notes.md for field-level accuracy notes across versions.
 

@@ -27,8 +27,8 @@ def validate(filepath):
         if value is None:
             status = "MISSING"
         elif value == [] or value == "":
-            # empty list is valid for C, F_t, K_t but flag for g and e_t
-            if field in ["g", "e_t", "P_t"]:
+            # only g and e_t must always have content
+            if field in ["g", "e_t"]:
                 status = "EMPTY - check this"
                 report["passed"] = False
             else:

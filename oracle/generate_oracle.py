@@ -245,10 +245,24 @@ def save_output(trajectory_id, step, prompt_version, response_dict, output_dir=N
 
 
 if __name__ == "__main__":
-    print("=== Running generate_oracle.py with dummy data ===\n")
+    import json as _json
 
-    dom = DUMMY_TRAJECTORY[-1]["observation"]  # use last step's observation
-    prompt = build_prompt(DUMMY_GOAL, DUMMY_TRAJECTORY, dom, t=5)
+    _TRAJ_PATH = os.path.join(os.path.dirname(__file__), "..", "trajectories", "data", "27.json")
+    _T = 16
+    _VERSION = "v3"
+
+    print(f"=== Running generate_oracle.py on task 27, step {_T}, prompt {_VERSION} ===\n")
+
+    with open(_TRAJ_PATH) as _f:
+        _traj = _json.load(_f)
+
+    _steps = [s for s in _traj["steps"] if "t" in s]
+    _step_obj = next(s for s in _steps if s["t"] == _T)
+    _dom = _step_obj["observation"]
+    _goal = _traj["intent"]
+    _task_id = str(_traj["task_id"])
+
+    prompt = build_prompt(_goal, _steps, _dom, t=_T, version=_VERSION)
     print("=== PROMPT PREVIEW (first 1200 chars) ===")
     print(prompt[:1200])
     print("==========================================\n")
@@ -259,9 +273,18 @@ if __name__ == "__main__":
     print(f"[tokens: {response['input_tokens']} in / {response['output_tokens']} out | cost: ${response['cost_usd']}]")
     print("=======================\n")
 
+    try:
+        _parsed = _json.loads(response["content"])
+        print("=== P_t ===")
+        for item in _parsed.get("P_t", []):
+            print(f"  - {item}")
+        print("===========")
+    except _json.JSONDecodeError:
+        print("WARNING: response was not valid JSON")
+
     save_output(
-        trajectory_id="dummy_task_001",
-        step=5,
-        prompt_version="v2",
+        trajectory_id=_task_id,
+        step=_T,
+        prompt_version=_VERSION,
         response_dict=response
     )

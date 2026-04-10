@@ -56,8 +56,10 @@ def process_trajectory(traj: dict, use_stub: bool, output_dir: str) -> tuple[int
     """
     task_id = traj["task_id"]
     task_goal = traj["intent"]
-    steps = traj["steps"]
     total_steps = traj["total_steps"]
+
+    # filter to real step entries only — evaluator error objects lack a 't' field
+    steps = [s for s in traj["steps"] if "t" in s]
 
     target_ts = evenly_spaced_steps(total_steps, K_STEPS)
 
@@ -79,7 +81,7 @@ def process_trajectory(traj: dict, use_stub: bool, output_dir: str) -> tuple[int
         dom = step["observation"]
         prompt = build_prompt(task_goal, steps, dom, t)
         result = call_oracle(prompt, use_stub=use_stub)
-        save_output(task_id, t, "v2", result, output_dir=output_dir)
+        save_output(task_id, t, "v3", result, output_dir=output_dir)
 
         states_generated += 1
         cost_incurred += result["cost_usd"]
