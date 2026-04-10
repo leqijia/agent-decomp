@@ -6,6 +6,8 @@ from urllib.parse import urlparse
 import requests
 from playwright.sync_api import CDPSession, Page
 
+import os
+
 from webarena.browser_env.env_config import (
     ACCOUNTS,
     GITLAB,
@@ -15,9 +17,39 @@ from webarena.browser_env.env_config import (
     SHOPPING_ADMIN,
     WIKIPEDIA,
 )
-from llms.providers.openai_utils import (
-    generate_from_openai_chat_completion,
-)
+from llm.openrouter import chat_completion
+
+# The upstream grader calls an LLM to do fuzzy / unachievable-task matching
+# against a reference answer. Upstream routes this to OpenAI directly; we
+# route it through OpenRouter to the oracle model (Claude Sonnet 4.6) so the
+# grader lives under the same API key, budget, and audit trail as every
+# other LLM call in the project. The shim below preserves upstream's
+# call-site signature so llm_fuzzy_match / llm_ua_match below are unchanged.
+_GRADER_MODEL = os.environ.get("ORACLE_MODEL", "anthropic/claude-sonnet-4.6")
+
+
+def generate_from_openai_chat_completion(
+    model: str,
+    messages: list[dict[str, Any]],
+    temperature: float,
+    max_tokens: int,
+    top_p: float,
+    context_length: int,
+) -> str:
+    """OpenRouter-backed drop-in for upstream's OpenAI wrapper.
+
+    `model` from the upstream call sites is ignored — the grader always uses
+    the oracle model so grading is consistent across tasks and across
+    teammates' runs. `context_length` is upstream-specific and unused here.
+    """
+    del model, context_length  # intentionally unused
+    return chat_completion(
+        messages,
+        model=_GRADER_MODEL,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        top_p=top_p,
+    ).content
 
 
 def shopping_get_auth_token() -> str:
