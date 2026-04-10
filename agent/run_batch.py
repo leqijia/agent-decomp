@@ -59,7 +59,7 @@ def main() -> None:
     group.add_argument("--all", action="store_true", help="Run all eligible tasks")
     parser.add_argument("--config-dir", default=str(_CONFIG_DIR))
     parser.add_argument("--out-dir", default=str(_OUT_DIR))
-    parser.add_argument("--model", default=os.environ.get("AGENT_MODEL", "qwen/qwen3.5-27b"))
+    parser.add_argument("--model", default=os.environ.get("AGENT_MODEL", "gemini-2.5-flash"))
     parser.add_argument("--max-steps", type=int, default=30)
     parser.add_argument("--seed", type=int, default=42, help="RNG seed for --sample")
 
