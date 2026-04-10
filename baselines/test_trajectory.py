@@ -1,4 +1,4 @@
-"""Tests for trajectory baselines (run: python -m unittest baselines.test_trajectory from oracle/)."""
+"""Tests for trajectory baselines (run from repo root: python -m unittest baselines.test_trajectory)."""
 
 import unittest
 

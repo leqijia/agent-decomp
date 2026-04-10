@@ -1,9 +1,9 @@
+import json
 import os
 import sys
-import json
 
-# baselines lives under oracle/ — add it to path so "baselines.trajectory" resolves
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "oracle"))
+# baselines/ lives at the repo root; add the root to sys.path so it imports cleanly
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from baselines.trajectory import (
     sliding_window_truncate,
