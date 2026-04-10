@@ -1,8 +1,7 @@
-"""Google Gemini API client.
+"""Google Gemini API client via the google-genai SDK.
 
-Same interface as openrouter.py (returns ChatResult) so callers don't need
-to know which provider is backing the model. Uses the GEMINI_API_KEY from
-.env and the google-generativeai SDK.
+Same ChatResult interface as openrouter.py so callers don't need to know
+which provider is backing the model. Uses GEMINI_API_KEY from .env.
 """
 from __future__ import annotations
 
@@ -10,53 +9,52 @@ import os
 import time
 from typing import Any
 
-import google.generativeai as genai
 from dotenv import load_dotenv
+from google import genai
+from google.genai import types
 
 from llm.openrouter import ChatResult, OpenRouterError
 
 load_dotenv()
 
-
-def _configure() -> None:
-    key = os.environ.get("GEMINI_API_KEY")
-    if not key:
-        raise OpenRouterError(
-            "GEMINI_API_KEY is not set. Put it in .env or export it."
-        )
-    genai.configure(api_key=key)
+_client: genai.Client | None = None
 
 
-_configured = False
+def _get_client() -> genai.Client:
+    global _client
+    if _client is None:
+        key = os.environ.get("GEMINI_API_KEY")
+        if not key:
+            raise OpenRouterError(
+                "GEMINI_API_KEY is not set. Put it in .env or export it."
+            )
+        _client = genai.Client(api_key=key)
+    return _client
 
 
-def _ensure_configured() -> None:
-    global _configured
-    if not _configured:
-        _configure()
-        _configured = True
-
-
-def _messages_to_gemini(messages: list[dict[str, Any]]) -> tuple[str | None, list[dict]]:
+def _messages_to_gemini(
+    messages: list[dict[str, Any]],
+) -> tuple[str | None, list[types.Content]]:
     """Convert OpenAI chat-messages format to Gemini content format.
 
-    Returns (system_instruction, contents) where contents is a list of
-    {"role": "user"|"model", "parts": [text]} dicts.
+    Returns (system_instruction, contents). System messages become the
+    system_instruction parameter; user/assistant messages become alternating
+    Content objects with role "user" / "model".
     """
-    system = None
-    contents = []
+    system_parts: list[str] = []
+    contents: list[types.Content] = []
+
     for msg in messages:
         role = msg["role"]
         text = msg["content"]
         if role == "system":
-            # Gemini supports system instructions as a separate parameter.
-            # If there are multiple system messages (e.g. intro + examples),
-            # concatenate them.
-            system = f"{system}\n\n{text}" if system else text
+            system_parts.append(text)
         elif role == "user":
-            contents.append({"role": "user", "parts": [text]})
+            contents.append(types.Content(role="user", parts=[types.Part(text=text)]))
         elif role == "assistant":
-            contents.append({"role": "model", "parts": [text]})
+            contents.append(types.Content(role="model", parts=[types.Part(text=text)]))
+
+    system = "\n\n".join(system_parts) if system_parts else None
     return system, contents
 
 
@@ -74,33 +72,26 @@ def chat_completion(
     """Make one chat call to the Gemini API.
 
     Accepts the same OpenAI chat-messages format as openrouter.chat_completion
-    and returns the same ChatResult, so the agent loop doesn't need to know
-    which provider is in use.
+    and returns the same ChatResult so the agent loop is provider-agnostic.
     """
-    _ensure_configured()
-
+    client = _get_client()
     system_instruction, contents = _messages_to_gemini(messages)
 
-    generation_config = genai.types.GenerationConfig(
+    config = types.GenerateContentConfig(
         temperature=temperature,
         top_p=top_p,
-    )
-    if max_tokens is not None:
-        generation_config.max_output_tokens = max_tokens
-    if stop:
-        generation_config.stop_sequences = stop
-
-    gen_model = genai.GenerativeModel(
-        model_name=model,
+        max_output_tokens=max_tokens or 4096,
         system_instruction=system_instruction,
-        generation_config=generation_config,
     )
+    if stop:
+        config.stop_sequences = stop
 
     t0 = time.monotonic()
     try:
-        response = gen_model.generate_content(
-            contents,
-            request_options={"timeout": timeout_s},
+        response = client.models.generate_content(
+            model=model,
+            contents=contents,
+            config=config,
         )
     except Exception as e:
         raise OpenRouterError(f"Gemini API request failed: {e}") from e
@@ -108,15 +99,21 @@ def chat_completion(
 
     try:
         content = response.text
-    except ValueError as e:
-        # Gemini may block content or return empty; surface it clearly
+    except (ValueError, AttributeError):
+        finish = (
+            response.candidates[0].finish_reason
+            if response.candidates
+            else "unknown"
+        )
         raise OpenRouterError(
-            f"Gemini returned no text. "
-            f"Finish reason: {response.candidates[0].finish_reason if response.candidates else 'unknown'}. "
-            f"Safety: {response.prompt_feedback}"
-        ) from e
+            f"Gemini returned no text. Finish reason: {finish}. "
+            f"Prompt feedback: {response.prompt_feedback}"
+        )
 
-    usage = getattr(response, "usage_metadata", None)
+    if content is None:
+        raise OpenRouterError("Gemini returned None text content")
+
+    usage = response.usage_metadata
     prompt_tokens = getattr(usage, "prompt_token_count", None) if usage else None
     completion_tokens = getattr(usage, "candidates_token_count", None) if usage else None
 

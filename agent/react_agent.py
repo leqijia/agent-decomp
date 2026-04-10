@@ -41,7 +41,8 @@ from agent.prompt_constructor import (
     extract_action,
     truncate_observation,
 )
-from llm.openrouter import OpenRouterError, chat_completion
+from llm.client import chat_completion
+from llm.openrouter import OpenRouterError
 from webarena.browser_env import (
     ActionParsingError,
     ActionTypes,
