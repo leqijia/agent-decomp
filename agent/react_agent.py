@@ -250,34 +250,45 @@ def run_episode(cfg: EpisodeConfig, *, out_path: str | Path | None = None) -> Ep
             action_str = ""
             action_obj = create_none_action()
 
-            try:
-                chat = chat_completion(
-                    messages,
-                    model=cfg.model,
-                    temperature=cfg.temperature,
-                )
+            # Retry transient API errors (503, 429, timeouts) up to 3 times
+            # with exponential backoff. Permanent failures still crash.
+            chat = None
+            for attempt in range(_API_RETRY_ATTEMPTS):
+                try:
+                    chat = chat_completion(
+                        messages,
+                        model=cfg.model,
+                        temperature=cfg.temperature,
+                    )
+                    break
+                except OpenRouterError as e:
+                    err_str = str(e)
+                    is_transient = any(code in err_str for code in ("503", "429", "UNAVAILABLE", "overloaded", "high demand"))
+                    if is_transient and attempt < _API_RETRY_ATTEMPTS - 1:
+                        time.sleep(_API_RETRY_BASE_DELAY * (2 ** attempt))
+                        continue
+                    raw_prediction = f"[API_ERROR] {e}"
+                    prompt_tokens = None
+                    completion_tokens = None
+                    latency_ms = 0
+                    parse_error = "api_error"
+                    result.stop_reason = "crash"
+                    result.steps.append(
+                        _make_step_dict(
+                            t, step_url, obs_truncated, "", raw_prediction,
+                            "", parse_error, prompt_tokens, completion_tokens, latency_ms,
+                        )
+                    )
+                    result.total_steps = t
+                    break
+            if chat is None and result.stop_reason == "crash":
+                break
+
+            if chat is not None:
                 raw_prediction = chat.content
                 prompt_tokens = chat.prompt_tokens
                 completion_tokens = chat.completion_tokens
                 latency_ms = chat.latency_ms
-            except OpenRouterError as e:
-                # A provider-side failure is not a parse failure; it's a hard
-                # stop on this episode. Record the error as the raw_prediction
-                # and abort with crash so it shows up in the audit.
-                raw_prediction = f"[OPENROUTER_ERROR] {e}"
-                prompt_tokens = None
-                completion_tokens = None
-                latency_ms = 0
-                parse_error = "openrouter_error"
-                result.stop_reason = "crash"
-                result.steps.append(
-                    _make_step_dict(
-                        t, step_url, obs_truncated, "", raw_prediction,
-                        "", parse_error, prompt_tokens, completion_tokens, latency_ms,
-                    )
-                )
-                result.total_steps = t
-                break
 
             try:
                 action_str = extract_action(template, raw_prediction)
