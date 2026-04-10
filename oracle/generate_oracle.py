@@ -4,9 +4,19 @@ import json
 import requests
 from dotenv import load_dotenv
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+from llm.client import chat_completion
+
 load_dotenv()
 
 API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+WEBARENA_URLS = {
+    "shopping":       "http://172.185.52.29:7770",
+    "shopping_admin": "http://172.185.52.29:7780",
+    "reddit":         "http://172.185.52.29:9999",
+    "gitlab":         "http://172.185.52.29:8023",
+}
 if not API_KEY:
     print("Error: OPENROUTER_API_KEY not found in .env file.")
     sys.exit(1)
@@ -50,24 +60,75 @@ DUMMY_DOM = "<div class='cart-page'><div class='item'>Laptop A</div><div class='
 DUMMY_GOAL = "Find the cheapest laptop on the shopping site and add it to cart"
 
 
+def get_live_dom(page_url, use_stub=False, use_observation=False, observation=None):
+    """
+    Fetch the ground-truth accessibility tree for a live WebArena page.
+
+    Args:
+        page_url:        the `url` field from a trajectory step
+        use_stub:        if True, return a fake accessibility tree (for testing)
+        use_observation: if True, return the trajectory step's stored observation
+                         as the DOM snapshot (interim fallback until CDP is ready)
+        observation:     the `observation` field from the trajectory step;
+                         required when use_observation=True
+
+    Returns:
+        string — accessibility tree / DOM snapshot
+
+    Full accessibility tree via CDP (Accessibility.getFullAXTree) will replace
+    the HTTP GET once Rocky confirms the Playwright method. Until then, use
+    use_observation=True to pass the trajectory's stored observation as the
+    DOM snapshot.
+    """
+    if use_stub:
+        return (
+            "[STUB accessibility tree]\n"
+            "RootWebArea 'Page'\n"
+            "  heading 'Welcome'\n"
+            "  link 'Shop'\n"
+            "  button 'Add to cart'\n"
+            "  StaticText 'Price: $299'"
+        )
+
+    if use_observation:
+        if observation is None:
+            raise ValueError("observation must be provided when use_observation=True")
+        return observation
+
+    # Live HTTP GET — returns raw HTML until CDP method is confirmed with Rocky
+    try:
+        response = requests.get(page_url, timeout=10)
+        response.raise_for_status()
+        return response.text
+    except requests.exceptions.ConnectionError:
+        print(f"Error: Could not connect to WebArena at {page_url}. Is the Docker environment running?")
+        sys.exit(1)
+    except requests.exceptions.Timeout:
+        print(f"Error: Request to {page_url} timed out.")
+        sys.exit(1)
+    except requests.exceptions.HTTPError as e:
+        print(f"HTTP error fetching DOM from {page_url}: {e}")
+        sys.exit(1)
+
+
 def load_prompt(version="v2"):
     path = os.path.join(os.path.dirname(__file__), f"prompts/oracle_state_{version}.txt")
     with open(path, "r") as f:
         return f.read()
 
 
-def build_prompt(task_goal, trajectory, dom, t, version="v2"):
+def build_prompt(task_goal, trajectory, dom, t, version="v2", observation=None):
     template = load_prompt(version)
-    # update these field names once Rocky shares real trajectory schema
     traj_text = "\n".join([
         f"Step {s['t']}: thought={s['thought']} | action={s['action']} | observation={s['observation']}"
         for s in trajectory if s['t'] <= t
     ])
+    dom_snapshot = dom if dom is not None else observation
     return template.format(
         task_goal=task_goal,
         t=t,
         trajectory_text=traj_text,
-        dom_snapshot=dom
+        dom_snapshot=dom_snapshot
     )
 
 
@@ -108,7 +169,20 @@ def _append_cost_log(trajectory_id, step, prompt_version, input_tokens, output_t
         json.dump(log, f, indent=2)
 
 
-def call_oracle(prompt, use_stub=True):
+def call_oracle(prompt, use_stub=True, model="anthropic/claude-sonnet-4-6"):
+    """
+    Call the oracle LLM with the filled prompt.
+
+    Uses the unified llm.client.chat_completion, which routes automatically:
+    - OpenRouter models (default): any non-Gemini model slug
+    - Gemini models: pass model="gemini-1.5-pro" or similar and the client
+      routes to the Google API using GEMINI_API_KEY instead.
+
+    Args:
+        prompt:   filled prompt string from build_prompt()
+        use_stub: if True, return a fake response without hitting any API
+        model:    OpenRouter slug or Gemini model name
+    """
     if use_stub:
         print("[STUB] call_oracle called - returning fake response")
         content = json.dumps({
@@ -122,36 +196,15 @@ def call_oracle(prompt, use_stub=True):
         }, indent=2)
         return {"content": content, "input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
 
-    url = "https://openrouter.ai/api/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": "anthropic/claude-sonnet-4-6",
-        "temperature": 0.0,
-        "messages": [{"role": "user", "content": prompt}]
-    }
-    try:
-        response = requests.post(url, headers=headers, json=payload, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        content = data["choices"][0]["message"]["content"]
-        input_tokens = data["usage"]["prompt_tokens"]
-        output_tokens = data["usage"]["completion_tokens"]
-        cost_usd = round((input_tokens * INPUT_TOKEN_RATE) + (output_tokens * OUTPUT_TOKEN_RATE), 6)
-        return {"content": content, "input_tokens": input_tokens, "output_tokens": output_tokens, "cost_usd": cost_usd}
-    except requests.exceptions.HTTPError as e:
-        if response.status_code == 401:
-            print("Error: Invalid API key.")
-        elif response.status_code == 402:
-            print("Error: Insufficient credits on OpenRouter account.")
-        else:
-            print(f"HTTP error {response.status_code}: {e}")
-        sys.exit(1)
-    except requests.exceptions.Timeout:
-        print("Error: Request timed out.")
-        sys.exit(1)
+    result = chat_completion(
+        [{"role": "user", "content": prompt}],
+        model=model,
+        temperature=0.0,
+    )
+    input_tokens = result.prompt_tokens or 0
+    output_tokens = result.completion_tokens or 0
+    cost_usd = round((input_tokens * INPUT_TOKEN_RATE) + (output_tokens * OUTPUT_TOKEN_RATE), 6)
+    return {"content": result.content, "input_tokens": input_tokens, "output_tokens": output_tokens, "cost_usd": cost_usd}
 
 
 def save_output(trajectory_id, step, prompt_version, response_dict, output_dir=None):
@@ -194,7 +247,8 @@ def save_output(trajectory_id, step, prompt_version, response_dict, output_dir=N
 if __name__ == "__main__":
     print("=== Running generate_oracle.py with dummy data ===\n")
 
-    prompt = build_prompt(DUMMY_GOAL, DUMMY_TRAJECTORY, DUMMY_DOM, t=5)
+    dom = DUMMY_TRAJECTORY[-1]["observation"]  # use last step's observation
+    prompt = build_prompt(DUMMY_GOAL, DUMMY_TRAJECTORY, dom, t=5)
     print("=== PROMPT PREVIEW (first 1200 chars) ===")
     print(prompt[:1200])
     print("==========================================\n")

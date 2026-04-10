@@ -2,10 +2,10 @@
   "trajectory_id": "dummy_task_001",
   "step": 5,
   "prompt_version": "v2",
-  "input_tokens": 853,
-  "output_tokens": 290,
-  "cost_usd": 0.006909,
-  "raw_response": "{\n  \"g\": \"Find the cheapest laptop on the shopping site and add it to cart\",\n  \"P_t\": [\n    \"Navigated to the shopping home page\",\n    \"Searched for laptops and retrieved 12 results\",\n    \"Sorted laptops by price ascending\",\n    \"Selected the cheapest laptop (Laptop A, $299)\",\n    \"Added Laptop A ($299) to the cart\"\n  ],\n  \"R_t\": [],\n  \"e_t\": \"The current page is the cart page. It contains one item: Laptop A priced at $299, with stock status 'In Stock'. A 'Checkout' button is present and available.\",\n  \"C\": [\n    \"The item must remain in the cart without being removed before checkout if the goal requires purchase completion\"\n  ],\n  \"F_t\": [],\n  \"K_t\": [\n    \"Laptop A is priced at $299 and is the cheapest among 12 laptops found\",\n    \"Laptop A is currently In Stock per the ground-truth DOM\",\n    \"The cart now contains 1 item: Laptop A at $299\",\n    \"A Checkout button is available on the cart page\"\n  ]\n}",
+  "input_tokens": 812,
+  "output_tokens": 263,
+  "cost_usd": 0.006381,
+  "raw_response": "{\n  \"g\": \"Find the cheapest laptop on the shopping site and add it to cart\",\n  \"P_t\": [\n    \"Navigated to the shopping home page\",\n    \"Searched for laptops and retrieved 12 results\",\n    \"Sorted laptops by price ascending\",\n    \"Selected the cheapest laptop (Laptop A, $299)\",\n    \"Added Laptop A ($299) to the cart\"\n  ],\n  \"R_t\": [],\n  \"e_t\": \"The cart confirmation page is displayed showing '1 item added', confirming that the selected laptop has been successfully added to the cart.\",\n  \"C\": [],\n  \"F_t\": [],\n  \"K_t\": [\n    \"The shopping site returned 12 laptops when searched with the term 'laptop'\",\n    \"Laptops were sorted by price using the sort_by_price control\",\n    \"The cheapest laptop identified after sorting was Laptop A, priced at $299\",\n    \"Laptop A was successfully added to the cart as confirmed by the ground-truth DOM showing '1 item added'\"\n  ]\n}",
   "parsed": {
     "g": "Find the cheapest laptop on the shopping site and add it to cart",
     "P_t": [
@@ -16,16 +16,14 @@
       "Added Laptop A ($299) to the cart"
     ],
     "R_t": [],
-    "e_t": "The current page is the cart page. It contains one item: Laptop A priced at $299, with stock status 'In Stock'. A 'Checkout' button is present and available.",
-    "C": [
-      "The item must remain in the cart without being removed before checkout if the goal requires purchase completion"
-    ],
+    "e_t": "The cart confirmation page is displayed showing '1 item added', confirming that the selected laptop has been successfully added to the cart.",
+    "C": [],
     "F_t": [],
     "K_t": [
-      "Laptop A is priced at $299 and is the cheapest among 12 laptops found",
-      "Laptop A is currently In Stock per the ground-truth DOM",
-      "The cart now contains 1 item: Laptop A at $299",
-      "A Checkout button is available on the cart page"
+      "The shopping site returned 12 laptops when searched with the term 'laptop'",
+      "Laptops were sorted by price using the sort_by_price control",
+      "The cheapest laptop identified after sorting was Laptop A, priced at $299",
+      "Laptop A was successfully added to the cart as confirmed by the ground-truth DOM showing '1 item added'"
     ]
   }
 }
