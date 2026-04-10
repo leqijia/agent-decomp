@@ -62,6 +62,8 @@ DEFAULT_PROMPT_PATH = Path(__file__).parent / "prompts" / "p_cot_id_actree_2s.js
 # run.py defaults. These drive the parse_failures and repeating_action
 # stop_reason values in trajectories/SPEC.md.
 _EARLY_STOP_K = 3
+_API_RETRY_ATTEMPTS = 3
+_API_RETRY_BASE_DELAY = 5  # seconds; doubles each attempt (5, 10, 20)
 
 
 @dataclass
