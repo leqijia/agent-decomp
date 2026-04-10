@@ -1,11 +1,12 @@
 # Trajectory JSON schema
 
 On-disk format for one agent episode. Emitted by `agent/react_agent.py` and
-read by the oracle pipeline, the harness, every baseline, annotators, and the
-Experiment 1 replay-and-intervene pipeline.
+read by the oracle pipeline, the harness, every baseline, the annotation
+tool, and the Experiment 1 replay-and-intervene pipeline.
 
-If you need a field that isn't here, ping Rocky — don't just add one, other
-people's code depends on the shape.
+This shape is load-bearing for every downstream consumer listed above. Do
+not add, rename, or repurpose a field without updating each of them in the
+same change.
 
 ## Example
 
@@ -17,7 +18,7 @@ people's code depends on the shape.
   "intent": "Create an issue in the a11y-webring.club repo",
   "start_url": "http://172.185.52.29:8023",
 
-  "model": "qwen/qwen3-32b",
+  "model": "qwen/Qwen3.5-27B",
   "agent_variant": "react",
   "observation_type": "accessibility_tree",
   "action_set_tag": "id_accessibility_tree",
@@ -68,7 +69,7 @@ WebArena config file (`references/webarena/config_files/test.raw.json`) so
 trajectory ↔ config is a trivial join. Exp 1 replay re-opens `config_file`
 with `ScriptBrowserEnv.reset(options={"config_file": ...})`.
 
-`model` — OpenRouter slug (`qwen/qwen3-32b`, `openai/gpt-5.2`). Needed to slice
+`model` — OpenRouter slug (`qwen/Qwen3.5-27B`, `openai/gpt-5.2`). Needed to slice
 the Experiment 1 generalizability comparison.
 
 `agent_variant` — `react` | `stateact` | `oracle_external` | `teacher_forcing`.
@@ -149,19 +150,20 @@ column in Table 1 of the proposal. Nullable if the provider didn't return usage.
 
 ## What's deliberately not stored
 
-**No per-step ground-truth DOM.** The oracle fetches it live from the WebArena
-env via CDP (`Accessibility.getFullAXTree`) at oracle generation time — either
-from the live page in Exp 3 or after replaying to step t* in Exp 1. Storing it
-per step would bloat files and go stale. If we ever need persisted ground-truth
-DOM for offline analysis, put it in a sidecar file, not here.
+Per-step ground-truth DOM. The oracle fetches it live from the WebArena env
+via CDP (`Accessibility.getFullAXTree`) at oracle generation time — from the
+live page in Exp 3, or after replaying to step `t*` in Exp 1. Storing it per
+step would bloat files and go stale. If persisted ground-truth DOM is ever
+needed for offline analysis, put it in a sidecar file keyed by
+`(task_id, t)`, not here.
 
-**No parsed action sub-fields** (`element_id`, `text`, `direction`, `answer`,
-…). All re-derivable from the canonical `action` string via
+Parsed action sub-fields (`element_id`, `text`, `direction`, `answer`, etc.).
+All re-derivable from the canonical `action` string via
 `create_id_based_action`. Duplicated state goes stale.
 
-**No `storage_state`, `require_login`, `intent_template`, etc.** Already in
-the WebArena config file referenced by `config_file`. Don't copy upstream's
-config into every record.
+WebArena config fields (`storage_state`, `require_login`, `intent_template`,
+eval spec). Already in the config file referenced by `config_file`. Do not
+copy upstream config into every record.
 
 ## Validation rules
 
