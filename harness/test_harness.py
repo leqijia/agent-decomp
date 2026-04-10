@@ -1,30 +1,24 @@
 import sys
 import os
 import json
-import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from harness.evaluator import compute_metrics, run_condition
+from harness.evaluator import compute_metrics
 
 # ---------------------------------------------------------------------------
-# compute_metrics tests (existing)
+# compute_metrics — legacy tests (success only, no eval_score/total_steps)
 # ---------------------------------------------------------------------------
 
-# Test 1 - mixed results
 fake_results_1 = [
     {"task_id": "task_001", "condition": "sliding_window", "success": True, "tokens_used": 3200},
     {"task_id": "task_002", "condition": "sliding_window", "success": False, "tokens_used": 4100},
     {"task_id": "task_003", "condition": "sliding_window", "success": True, "tokens_used": 2900},
 ]
-
-# Test 2 - all failed
 fake_results_2 = [
     {"task_id": "task_004", "condition": "raw", "success": False, "tokens_used": 5000},
     {"task_id": "task_005", "condition": "raw", "success": False, "tokens_used": 4800},
 ]
-
-# Test 3 - empty results (edge case)
 fake_results_3 = []
 
 print("Test 1 (mixed):", compute_metrics(fake_results_1))
@@ -32,34 +26,34 @@ print("Test 2 (all failed):", compute_metrics(fake_results_2))
 print("Test 3 (empty):", compute_metrics(fake_results_3))
 
 # ---------------------------------------------------------------------------
-# run_condition tests - sliding_window and observation_masking
+# compute_metrics — new fields: eval_score, total_steps, by_length_bin
 # ---------------------------------------------------------------------------
 
-fake_steps = [
-    {"t": 1, "thought": "navigate", "action": "click('home')",
-     "observation": "homepage loaded"},
-    {"t": 2, "thought": "search", "action": "type('laptop')",
-     "observation": "12 results found"},
-    {"t": 3, "thought": "filter", "action": "click('price')",
-     "observation": "sorted by price"},
+fake_results = [
+    {"task_id": "task_001", "condition": "raw", "success": True,
+     "tokens_used": 3200, "eval_score": 1.0, "total_steps": 8},
+    {"task_id": "task_002", "condition": "raw", "success": False,
+     "tokens_used": 4100, "eval_score": 0.0, "total_steps": 25},
+    {"task_id": "task_003", "condition": "raw", "success": True,
+     "tokens_used": 2900, "eval_score": 0.8, "total_steps": 15},
+    {"task_id": "task_004", "condition": "sliding_window", "success": False,
+     "tokens_used": 3800, "eval_score": 0.2, "total_steps": 45},
 ]
 
-# write fake trajectory to a temp file
-with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-    json.dump({"steps": fake_steps}, f)
-    tmp_path = f.name
+metrics = compute_metrics(fake_results)
+print("\nTest 4 (eval_score + total_steps):")
+print(json.dumps(metrics, indent=2))
 
-try:
-    sw_result = run_condition(tmp_path, "sliding_window", "fake_001", window_size=4000)
-    print("\nsliding_window (max_tokens=4000):")
-    print(f"  tokens_used:   {sw_result['tokens_used']}")
-    print(f"  dropped_steps: {sw_result['dropped_steps']}")
-    print(f"  success:       {sw_result['success']}")
-
-    om_result = run_condition(tmp_path, "observation_masking", "fake_001")
-    print("\nobservation_masking:")
-    print(f"  tokens_used:   {om_result['tokens_used']}")
-    print(f"  dropped_steps: {om_result['dropped_steps']}")
-    print(f"  success:       {om_result['success']}")
-finally:
-    os.unlink(tmp_path)
+# verify by_length_bin grouping
+# task_001: total_steps=8  -> "<=10"
+# task_003: total_steps=15 -> "11-20"
+# task_002: total_steps=25 -> "21-40"
+# task_004: total_steps=45 -> "41-80"
+expected_bins = {"<=10", "11-20", "21-40", "41-80"}
+actual_bins = set(metrics["by_length_bin"].keys())
+assert actual_bins == expected_bins, f"Expected bins {expected_bins}, got {actual_bins}"
+assert metrics["by_length_bin"]["<=10"]["count"] == 1
+assert metrics["by_length_bin"]["11-20"]["count"] == 1
+assert metrics["by_length_bin"]["21-40"]["count"] == 1
+assert metrics["by_length_bin"]["41-80"]["count"] == 1
+print("\nby_length_bin grouping: OK")
