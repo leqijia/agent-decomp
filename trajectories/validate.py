@@ -13,7 +13,7 @@ class output_mapper:
                     "sites": "sites",
                     "intent": "intent",
                     "start_url": "start_url",
-                    "model": "modle",
+                    "model": "model",
                     "agent_variant": "agent_variant",
                     "observation_type": "observation_type",
                     "action_set_tag": "action_set_tag",
@@ -107,7 +107,7 @@ class output_mapper:
             return True
         else:
             total_steps = data.get("total_steps","")
-            array_length= len((data.get("steps"),None)) 
+            array_length = len(data.get("steps", [])) 
             if int(total_steps) == array_length:
                 return True
             else: 
