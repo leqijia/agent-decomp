@@ -74,7 +74,7 @@ class EpisodeConfig:
     prompt_path: Path = DEFAULT_PROMPT_PATH
     max_steps: int = 30
     temperature: float = 0.0
-    max_obs_length: int = 1920
+    max_obs_length: int = 4096
     observation_type: str = "accessibility_tree"
     action_set_tag: str = "id_accessibility_tree"
     agent_variant: str = "react"
