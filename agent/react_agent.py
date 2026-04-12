@@ -62,8 +62,8 @@ DEFAULT_PROMPT_PATH = Path(__file__).parent / "prompts" / "p_cot_id_actree_2s.js
 # run.py defaults. These drive the parse_failures and repeating_action
 # stop_reason values in trajectories/SPEC.md.
 _EARLY_STOP_K = 3
-_API_RETRY_ATTEMPTS = 3
-_API_RETRY_BASE_DELAY = 5  # seconds; doubles each attempt (5, 10, 20)
+_API_RETRY_ATTEMPTS = 5
+_API_RETRY_BASE_DELAY = 10  # seconds; doubles each attempt (10, 20, 40, 80, 160)
 
 
 @dataclass
@@ -265,7 +265,7 @@ def run_episode(cfg: EpisodeConfig, *, out_path: str | Path | None = None) -> Ep
                     break
                 except OpenRouterError as e:
                     err_str = str(e)
-                    is_transient = any(code in err_str for code in ("503", "429", "UNAVAILABLE", "overloaded", "high demand"))
+                    is_transient = any(code in err_str for code in ("502", "503", "429", "UNAVAILABLE", "overloaded", "high demand", "rate increased too quickly", "Alibaba"))
                     if is_transient and attempt < _API_RETRY_ATTEMPTS - 1:
                         time.sleep(_API_RETRY_BASE_DELAY * (2 ** attempt))
                         continue
