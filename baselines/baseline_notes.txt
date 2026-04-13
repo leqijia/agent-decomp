@@ -1,4 +1,4 @@
-Implemented baselines (high level)
+Baselines (High-level)
 =================================
 
 1) Sliding window trajectory truncation
@@ -28,3 +28,25 @@ Implemented baselines (high level)
 4) Test coverage
 - Unit tests validate serialization format, masking invariants, step-boundary
   truncation behavior, edge cases, and composition helpers.
+
+5) ACON-style compression baseline (baselines/acon/)
+- compress_trajectory(intent, steps, guideline, llm=...): LLM compresses the
+  serialized trajectory (same line format as trajectory.py) following a
+  natural-language guideline. Default LLM path uses OpenRouter
+  (OPENROUTER_API_KEY, optional ACON_MODEL). Pass llm= for offline/tests.
+- propose_guideline_update(pair, state, llm=...) and
+  optimize_guidelines_round(pairs, state, ...): when full context succeeds
+  but compressed context fails, an LLM proposes a revised guideline
+  (### REVISED_GUIDELINE section in the response).
+- Offline pairs: JSONL lines with objects like:
+    task_id, intent, full_success, compressed_success,
+    optional path_full_traj OR full_trajectory_text,
+    optional compressed_context_used, optional failure_signal
+  Qualifying rows: full_success=true and compressed_success=false.
+- CLI (from repo root):
+    python -m baselines.acon.optimize --pairs pairs.jsonl \
+      --guideline-in g0.json --guideline-out g1.json
+    Add --dry-run to print prompts only (no API calls).
+- Harness follow-up (not in this package): wire a context_policy that calls
+  compress_trajectory during rollouts so paired trajectories can be produced
+  automatically; see harness/SPEC.md.

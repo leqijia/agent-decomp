@@ -1,0 +1,22 @@
+You maintain a natural-language guideline for an LLM that compresses long agent trajectories. The compressor reads the guideline before summarizing.
+
+Current guideline:
+{guideline}
+
+Task (intent):
+{intent}
+
+Reference context from a successful run (full or unconstrained context — ground truth for what mattered):
+{full_trajectory_or_summary}
+
+Compressed context that was shown to the agent on the failing run:
+{compressed_context_used}
+
+Failure signal (evaluator notes, final action, success flags, etc.):
+{failure_signal}
+
+The run with full context succeeded, but the run that only saw the compressed context failed. Revise the guideline so future compressions keep the information that was apparently dropped and that is needed to succeed.
+
+Respond with exactly this structure:
+### REVISED_GUIDELINE
+<the full new guideline text, self-contained>

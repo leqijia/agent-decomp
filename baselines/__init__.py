@@ -1,3 +1,16 @@
+from .acon import (
+    CompressedContext,
+    GuidelineState,
+    PairRecord,
+    compress_trajectory,
+    load_guideline_state,
+    load_pair_records_jsonl,
+    load_trajectory_steps,
+    optimize_guidelines_round,
+    propose_guideline_update,
+    save_guideline_state,
+    trajectory_to_text,
+)
 from .trajectory import (
     DEFAULT_ENCODING_NAME,
     DEFAULT_OBSERVATION_PLACEHOLDER,
@@ -17,6 +30,17 @@ from .trajectory import (
 )
 
 __all__ = [
+    "CompressedContext",
+    "GuidelineState",
+    "PairRecord",
+    "compress_trajectory",
+    "load_guideline_state",
+    "load_pair_records_jsonl",
+    "load_trajectory_steps",
+    "optimize_guidelines_round",
+    "propose_guideline_update",
+    "save_guideline_state",
+    "trajectory_to_text",
     "DEFAULT_ENCODING_NAME",
     "DEFAULT_OBSERVATION_PLACEHOLDER",
     "WINDOW_16K",
