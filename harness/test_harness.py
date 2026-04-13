@@ -4,7 +4,7 @@ import json
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from harness.evaluator import compute_metrics
+from harness.evaluator import compute_metrics, run_acon_compress
 
 # ---------------------------------------------------------------------------
 # compute_metrics — legacy tests (success only, no eval_score/total_steps)
@@ -57,3 +57,31 @@ assert metrics["by_length_bin"]["11-20"]["count"] == 1
 assert metrics["by_length_bin"]["21-40"]["count"] == 1
 assert metrics["by_length_bin"]["41-80"]["count"] == 1
 print("\nby_length_bin grouping: OK")
+
+# ---------------------------------------------------------------------------
+# run_acon_compress — ACON compression with stub LLM
+# ---------------------------------------------------------------------------
+
+fake_steps = [
+    {"t": 1, "thought": "navigate", "action": "click('home')",
+     "observation": "homepage loaded"},
+    {"t": 2, "thought": "search", "action": "type('laptop')",
+     "observation": "12 results found"},
+    {"t": 3, "thought": "filter", "action": "click('price')",
+     "observation": "sorted by price"},
+]
+
+print("\nTest 5 (acon compress):")
+acon_result = run_acon_compress(
+    intent="Find the cheapest laptop and add it to cart",
+    steps=fake_steps,
+    guideline="",
+)
+print(f"  model:          {acon_result['model']}")
+print(f"  input_tokens:   {acon_result['input_tokens']}")
+print(f"  compressed_text (first 80 chars): {acon_result['compressed_text'][:80]!r}")
+
+assert isinstance(acon_result["compressed_text"], str), "compressed_text must be str"
+assert acon_result["input_tokens"] > 0, "input_tokens must be > 0"
+assert acon_result["model"] == "stub", f"expected model='stub', got {acon_result['model']!r}"
+print("PASS")

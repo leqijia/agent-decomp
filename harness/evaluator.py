@@ -3,6 +3,31 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+from baselines.acon import compress_trajectory
+
+
+def _stub_llm(msg: str) -> str:
+    """Stub LLM for ACON compression — returns a deterministic fake response."""
+    return "### COMPRESSED_CONTEXT\n" + msg[:500]
+
+
+def run_acon_compress(intent: str, steps: list[dict], guideline: str = "") -> dict:
+    """
+    Compress a trajectory using ACON with the stub LLM.
+
+    This is the compression step that will be called inside run_episode()
+    for condition='acon' once Rocky's episode interface is ready.
+
+    Returns:
+        {"compressed_text": str, "input_tokens": int, "model": str}
+    """
+    result = compress_trajectory(intent, steps, guideline, llm=_stub_llm)
+    return {
+        "compressed_text": result.compressed_text,
+        "input_tokens": result.input_tokens,
+        "model": result.model,
+    }
+
 
 def _length_bin(total_steps: int) -> str:
     if total_steps <= 10:
@@ -34,6 +59,13 @@ def run_episode(
 
     Returns:
         dict with task_id, condition, success, tokens_used, eval_score, total_steps
+
+    ACON condition (once Rocky's interface is ready):
+        steps_so_far = rocky_interface.get_steps(config_file, up_to=t)
+        intent = rocky_interface.get_intent(config_file)
+        acon = run_acon_compress(intent, steps_so_far)
+        # inject acon["compressed_text"] into agent context
+        # tokens_used = acon["input_tokens"]
     """
     raise NotImplementedError("Pending Rocky's interface spec")
 
