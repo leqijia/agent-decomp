@@ -37,7 +37,7 @@ def main() -> None:
         help="Model slug — OpenRouter (default: $AGENT_MODEL from .env)",
     )
     parser.add_argument("--max-steps", type=int, default=30)
-    parser.add_argument("--max-obs-length", type=int, default=1920)
+    parser.add_argument("--max-obs-length", type=int, default=4096)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument(
         "--headless", action="store_true", default=True,
@@ -46,6 +46,18 @@ def main() -> None:
     parser.add_argument(
         "--no-headless", action="store_false", dest="headless",
         help="Show the browser window (for debugging)",
+    )
+    parser.add_argument(
+        "--thinking", action="store_true", default=True,
+        help="Enable Qwen3 thinking mode (default: on)",
+    )
+    parser.add_argument(
+        "--no-thinking", action="store_false", dest="thinking",
+        help="Disable thinking mode",
+    )
+    parser.add_argument(
+        "--thinking-budget", type=int, default=1024,
+        help="Token budget for thinking mode (default: 1024)",
     )
 
     args = parser.parse_args()
@@ -65,6 +77,8 @@ def main() -> None:
         temperature=args.temperature,
         max_obs_length=args.max_obs_length,
         headless=args.headless,
+        thinking=args.thinking,
+        thinking_budget=args.thinking_budget,
     )
 
     print(f"Running task {task_id} with {cfg.model}, max_steps={cfg.max_steps}")

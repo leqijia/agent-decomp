@@ -62,6 +62,18 @@ def main() -> None:
     parser.add_argument("--model", default=os.environ.get("AGENT_MODEL", "qwen/qwen3.5-27b"))
     parser.add_argument("--max-steps", type=int, default=30)
     parser.add_argument("--seed", type=int, default=42, help="RNG seed for --sample")
+    parser.add_argument(
+        "--thinking", action="store_true", default=True,
+        help="Enable Qwen3 thinking mode (default: on)",
+    )
+    parser.add_argument(
+        "--no-thinking", action="store_false", dest="thinking",
+        help="Disable thinking mode",
+    )
+    parser.add_argument(
+        "--thinking-budget", type=int, default=1024,
+        help="Token budget for thinking mode (default: 1024)",
+    )
 
     args = parser.parse_args()
     config_dir = Path(args.config_dir)
@@ -105,6 +117,8 @@ def main() -> None:
                 config_file=str(config_path),
                 model=args.model,
                 max_steps=args.max_steps,
+                thinking=args.thinking,
+                thinking_budget=args.thinking_budget,
             )
             result = run_episode(cfg, out_path=out_path)
             print(

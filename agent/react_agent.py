@@ -80,6 +80,12 @@ class EpisodeConfig:
     agent_variant: str = "react"
     headless: bool = True
     sleep_after_execution: float = 2.0  # WebArena hard-sleep for page settling
+    # Qwen3 thinking mode. When True, passes enable_thinking + a token budget
+    # to the OpenRouter API so the model emits <think> reasoning blocks.
+    # Budget of 1024 is "light" — enough for step-level reasoning without
+    # burning tokens on long internal monologues.
+    thinking: bool = True
+    thinking_budget: int = 1024
 
 
 @dataclass
@@ -254,6 +260,10 @@ def run_episode(cfg: EpisodeConfig, *, out_path: str | Path | None = None) -> Ep
 
             # Retry transient API errors (503, 429, timeouts) up to 3 times
             # with exponential backoff. Permanent failures still crash.
+            thinking_body = (
+                {"enable_thinking": True, "thinking_budget_tokens": cfg.thinking_budget}
+                if cfg.thinking else None
+            )
             chat = None
             for attempt in range(_API_RETRY_ATTEMPTS):
                 try:
@@ -261,6 +271,7 @@ def run_episode(cfg: EpisodeConfig, *, out_path: str | Path | None = None) -> Ep
                         messages,
                         model=cfg.model,
                         temperature=cfg.temperature,
+                        extra_body=thinking_body,
                     )
                     break
                 except OpenRouterError as e:
@@ -391,6 +402,7 @@ def run_episode(cfg: EpisodeConfig, *, out_path: str | Path | None = None) -> Ep
             pass
 
     result.ended_at = _now_iso()
+    print(f"  => stop={result.stop_reason} | steps={result.total_steps} | success={result.success} | score={result.eval_score}")
 
     if out_path is not None:
         out_path = Path(out_path)

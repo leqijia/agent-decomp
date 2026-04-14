@@ -38,5 +38,5 @@ load_dotenv()
 
 AGENT_MODEL: str = os.environ.get("AGENT_MODEL", "qwen/qwen3.5-27b")
 ORACLE_MODEL: str = os.environ.get("ORACLE_MODEL", "anthropic/claude-sonnet-4-6")
-GENERALIZABILITY_MODEL: str = os.environ.get("GENERALIZABILITY_MODEL", "openai/gpt-4.5")
+GENERALIZABILITY_MODEL: str = os.environ.get("GENERALIZABILITY_MODEL", "openai/gpt-5.2")
 ACON_MODEL: str = os.environ.get("ACON_MODEL", "anthropic/claude-sonnet-4-6")
