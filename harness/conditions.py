@@ -34,13 +34,13 @@ class ContextPolicy(Protocol):
 # agent_variant: which agent class/config to instantiate
 # policy_name:   which ContextPolicy implementation to apply
 CONDITION_REGISTRY: dict[str, tuple[str, str]] = {
-    "raw":                ("standard",     "identity"),
-    "sliding_window":     ("standard",     "sliding_window"),
-    "observation_masking":("standard",     "observation_masking"),
+    "raw":                ("react",        "identity"),
+    "sliding_window":     ("react",        "sliding_window"),
+    "observation_masking":("react",        "observation_masking"),
     "acon":               ("react",        "acon"),
     "agentdiet":          ("agentdiet",    "identity"),
-    "perfect_retrieval":  ("standard",     "perfect_retrieval"),
-    "env_only":           ("standard",     "env_only"),
-    "self_generated":     ("standard",     "self_generated"),
-    "oracle_external":    ("standard",     "oracle_external"),
+    "perfect_retrieval":  ("react",        "perfect_retrieval"),
+    "env_only":           ("react",        "env_only"),
+    "self_generated":     ("stateact",     "identity"),
+    "oracle_external":    ("react",        "oracle_external"),
 }

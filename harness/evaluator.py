@@ -3,6 +3,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+from llm.config import AGENT_MODEL
+
 from baselines.acon import compress_trajectory
 
 
@@ -46,7 +48,7 @@ def run_episode(
     condition: str,
     config_file: str,
     *,
-    model: str = "qwen/Qwen3.5-27B",
+    model: str = AGENT_MODEL,
     max_steps: int = 30,
     max_obs_length: int = 1920,
     temperature: float = 0.0,
@@ -75,7 +77,7 @@ def run_intervention(
     t_star: int,
     replacement_context: str,
     *,
-    model: str = "qwen/Qwen3.5-27B",
+    model: str = AGENT_MODEL,
     out_path: str | None = None,
 ) -> dict:
     """

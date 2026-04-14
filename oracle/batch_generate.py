@@ -79,7 +79,7 @@ def process_trajectory(traj: dict, use_stub: bool, output_dir: str) -> tuple[int
             continue
 
         dom = step["observation"]
-        prompt = build_prompt(task_goal, steps, dom, t)
+        prompt = build_prompt(task_goal, steps, dom, t, version="v3")
         result = call_oracle(prompt, use_stub=use_stub)
         save_output(task_id, t, "v3", result, output_dir=output_dir)
 

@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from llm.client import chat_completion
+from llm.config import ORACLE_MODEL
 
 load_dotenv()
 
@@ -169,7 +170,7 @@ def _append_cost_log(trajectory_id, step, prompt_version, input_tokens, output_t
         json.dump(log, f, indent=2)
 
 
-def call_oracle(prompt, use_stub=True, model="anthropic/claude-sonnet-4-6"):
+def call_oracle(prompt, use_stub=True, model=None):
     """
     Call the oracle LLM with the filled prompt.
 
@@ -198,7 +199,7 @@ def call_oracle(prompt, use_stub=True, model="anthropic/claude-sonnet-4-6"):
 
     result = chat_completion(
         [{"role": "user", "content": prompt}],
-        model=model,
+        model=model or ORACLE_MODEL,
         temperature=0.0,
     )
     input_tokens = result.prompt_tokens or 0

@@ -33,8 +33,8 @@ def main() -> None:
         help="Directory for output JSON. File is named <task_id>.json.",
     )
     parser.add_argument(
-        "--model", default=os.environ.get("AGENT_MODEL", "gemini-2.5-flash"),
-        help="Model slug — Gemini or OpenRouter (default: $AGENT_MODEL from .env)",
+        "--model", default=os.environ.get("AGENT_MODEL", "qwen/qwen3.5-27b"),
+        help="Model slug — OpenRouter (default: $AGENT_MODEL from .env)",
     )
     parser.add_argument("--max-steps", type=int, default=30)
     parser.add_argument("--max-obs-length", type=int, default=1920)

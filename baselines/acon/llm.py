@@ -4,9 +4,13 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import urllib.error
 import urllib.request
 from typing import Any, Callable
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+from llm.config import ACON_MODEL
 
 LLMGenerate = Callable[[str], str]
 
@@ -24,7 +28,7 @@ def openrouter_generate(
             "OPENROUTER_API_KEY is not set; pass llm= to compress_trajectory / "
             "propose_guideline_update or set the environment variable."
         )
-    model = model or os.environ.get("ACON_MODEL", "anthropic/claude-sonnet-4-6")
+    model = model or ACON_MODEL
     payload: dict[str, Any] = {
         "model": model,
         "temperature": temperature,

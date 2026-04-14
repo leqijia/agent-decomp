@@ -12,6 +12,7 @@ from baselines.trajectory import (
     serialize_trajectory,
 )
 
+from llm.config import ACON_MODEL
 from .llm import LLMGenerate, openrouter_generate
 from .parsing import extract_compressed_context
 from .templating import build_compress_user_message
@@ -43,9 +44,7 @@ def compress_trajectory(
     generate = llm if llm is not None else openrouter_generate
     if generate is openrouter_generate:
         raw = openrouter_generate(user_message, model=model or None)
-        used_model = model or os.environ.get(
-            "ACON_MODEL", "anthropic/claude-sonnet-4-6"
-        )
+        used_model = model or ACON_MODEL
     else:
         raw = generate(user_message)
         used_model = model or "stub"

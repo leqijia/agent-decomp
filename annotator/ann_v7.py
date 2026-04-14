@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import gradio as gr
 
 
-TRAJECTORY_DIR = Path("trajectories")
+TRAJECTORY_DIR = Path("trajectories/data")
 ANNOTATION_DIR = Path("annotations")
 
 
