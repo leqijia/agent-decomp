@@ -38,7 +38,7 @@ CONDITION_REGISTRY: dict[str, tuple[str, str]] = {
     "sliding_window":     ("react",        "sliding_window"),
     "observation_masking":("react",        "observation_masking"),
     "acon":               ("react",        "acon"),
-    "agentdiet":          ("agentdiet",    "identity"),
+    "agentdiet":          ("react",        "agentdiet"),
     "perfect_retrieval":  ("react",        "perfect_retrieval"),
     "env_only":           ("react",        "env_only"),
     "self_generated":     ("stateact",     "identity"),

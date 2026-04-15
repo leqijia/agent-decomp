@@ -11,6 +11,12 @@ from .acon import (
     save_guideline_state,
     trajectory_to_text,
 )
+from .agentdiet import (
+    agentdiet_filter,
+    compress_failed_runs,
+    dedup_observations,
+    remove_expired_navigations,
+)
 from .trajectory import (
     DEFAULT_ENCODING_NAME,
     DEFAULT_OBSERVATION_PLACEHOLDER,
@@ -30,6 +36,10 @@ from .trajectory import (
 )
 
 __all__ = [
+    "agentdiet_filter",
+    "compress_failed_runs",
+    "dedup_observations",
+    "remove_expired_navigations",
     "CompressedContext",
     "GuidelineState",
     "PairRecord",
