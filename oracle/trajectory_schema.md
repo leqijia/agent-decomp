@@ -71,3 +71,40 @@ All four are present in the confirmed schema with the same names.
 **No field name changes needed** when switching from dummy to real trajectories.
 
 The `task_goal` argument to `build_prompt()` maps to `intent` at the top level.
+
+---
+
+## Implementation notes
+
+**Field name alignment** — All step fields read by `build_prompt()` (`t`, `thought`,
+`action`, `observation`) match the confirmed schema exactly. No remapping needed.
+
+**Evaluator error objects** — The harness appends a dict with key `"evaluator_error"`
+(not `"t"`) as the last element of `steps[]` when scoring fails. All pipeline code
+that iterates over steps must filter these out:
+
+    steps = [s for s in traj["steps"] if "t" in s]
+
+**DOM snapshots not stored** — `observation` is the agent's accessibility tree at the
+time of the step, not a ground-truth DOM snapshot. For oracle generation the interim
+fallback is `use_observation=True` in `get_live_dom()`, which passes the stored
+observation as the DOM snapshot until CDP access is confirmed with Rocky.
+
+**total_steps accuracy** — `total_steps` counts actual agent steps, excluding the
+evaluator error object. The step numbers `t` run 1 … total_steps inclusive.
+
+**Step counts per task (current batch)**
+
+| Task | total_steps | Steps with oracle states |
+|------|-------------|--------------------------|
+| 27   | 30          | 1, 8, 16, 23, 30         |
+| 62   | 18+         | 1, 5, 10, 14, 18         |
+| 114  | 19+         | 1, 6, 10, 14, 19         |
+| 130  | 27+         | 1, 8, 14, 20, 27         |
+| 199  | 30          | 1, 8, 16, 23, 30         |
+| 322  | 30          | 1, 8, 16, 23, 30         |
+| 332  | 24+         | 1, 7, 12, 18, 24         |
+| 401  | 26+         | 1, 7, 14, 20, 26         |
+
+Oracle states are k=5 evenly spaced steps selected by `evenly_spaced_steps()` in
+`oracle/batch_generate.py`, always including step 1 and the final step.
