@@ -96,6 +96,7 @@ observation before prompting.
 - `repeating_action` — K consecutive identical actions (same source)
 - `env_terminated` — `env.step` returned `terminated=True`
 - `crash` — unhandled exception; `success` is `null` in this case
+- `replay_desync` — Exp 1 replay diverged from stored trajectory (element ids shifted, action failed)
 
 `success`, `eval_score` — from `evaluator_router(config_file)(...)`. `null` iff
 `stop_reason == "crash"` or the evaluator couldn't run.
