@@ -1095,6 +1095,90 @@ async def aexecute_playwright_check(
     await locator.check()
 
 
+def _scroll_element_into_view(
+    element_id: str,
+    page: Page,
+    obseration_processor: ObservationProcessor,
+) -> None:
+    """Scroll a target element into the viewport before clicking.
+
+    When current_viewport_only=False the accessibility tree includes
+    elements below the fold.  Their bounding rects have y > viewport
+    height, so page.mouse.click() fires at an off-screen coordinate and
+    silently misses.  Scrolling into view first fixes this.
+    """
+    try:
+        node_info = obseration_processor.obs_nodes_info.get(element_id)  # type: ignore[attr-defined]
+        if node_info is None:
+            return
+        backend_id = node_info.get("backend_id")
+        if backend_id is None:
+            return
+        client = page.client  # type: ignore[attr-defined]
+        remote = client.send(
+            "DOM.resolveNode", {"backendNodeId": int(backend_id)}
+        )
+        object_id = remote["object"]["objectId"]
+        client.send(
+            "Runtime.callFunctionOn",
+            {
+                "objectId": object_id,
+                "functionDeclaration": """
+                    function() {
+                        this.scrollIntoView({block: 'center', inline: 'center'});
+                    }
+                """,
+                "returnByValue": True,
+            },
+        )
+    except Exception:
+        pass
+
+
+def _get_fresh_element_center(
+    element_id: str,
+    page: Page,
+    obseration_processor: ObservationProcessor,
+) -> tuple[float, float]:
+    """Get element center after scrolling into view.
+
+    After scrollIntoView the old bounding rect is stale.  Re-query it
+    via CDP so the click lands on the correct viewport-relative position.
+    """
+    try:
+        node_info = obseration_processor.obs_nodes_info.get(element_id)  # type: ignore[attr-defined]
+        if node_info is None:
+            return obseration_processor.get_element_center(element_id)  # type: ignore[attr-defined]
+        backend_id = node_info.get("backend_id")
+        if backend_id is None:
+            return obseration_processor.get_element_center(element_id)  # type: ignore[attr-defined]
+        client = page.client  # type: ignore[attr-defined]
+        remote = client.send(
+            "DOM.resolveNode", {"backendNodeId": int(backend_id)}
+        )
+        object_id = remote["object"]["objectId"]
+        response = client.send(
+            "Runtime.callFunctionOn",
+            {
+                "objectId": object_id,
+                "functionDeclaration": """
+                    function() {
+                        return this.getBoundingClientRect().toJSON();
+                    }
+                """,
+                "returnByValue": True,
+            },
+        )
+        rect = response["result"]["value"]
+        viewport_size = page.viewport_size
+        assert viewport_size
+        center_x = (rect["x"] + rect["width"] / 2) / viewport_size["width"]
+        center_y = (rect["y"] + rect["height"] / 2) / viewport_size["height"]
+        return (center_x, center_y)
+    except Exception:
+        return obseration_processor.get_element_center(element_id)  # type: ignore[attr-defined]
+
+
 def execute_action(
     action: Action,
     page: Page,
@@ -1122,11 +1206,10 @@ def execute_action(
             execute_type(action["text"], page)
 
         case ActionTypes.CLICK:
-            # check each kind of locator in order
-            # TODO[shuyanzh]: order is temp now
             if action["element_id"]:
                 element_id = action["element_id"]
-                element_center = obseration_processor.get_element_center(element_id)  # type: ignore[attr-defined]
+                _scroll_element_into_view(element_id, page, obseration_processor)
+                element_center = _get_fresh_element_center(element_id, page, obseration_processor)
                 execute_mouse_click(element_center[0], element_center[1], page)
             elif action["element_role"] and action["element_name"]:
                 element_role = int(action["element_role"])
@@ -1144,7 +1227,8 @@ def execute_action(
         case ActionTypes.HOVER:
             if action["element_id"]:
                 element_id = action["element_id"]
-                element_center = obseration_processor.get_element_center(element_id)  # type: ignore[attr-defined]
+                _scroll_element_into_view(element_id, page, obseration_processor)
+                element_center = _get_fresh_element_center(element_id, page, obseration_processor)
                 execute_mouse_hover(element_center[0], element_center[1], page)
             elif action["element_role"] and action["element_name"]:
                 element_role = int(action["element_role"])
@@ -1163,7 +1247,8 @@ def execute_action(
         case ActionTypes.TYPE:
             if action["element_id"]:
                 element_id = action["element_id"]
-                element_center = obseration_processor.get_element_center(element_id)  # type: ignore[attr-defined]
+                _scroll_element_into_view(element_id, page, obseration_processor)
+                element_center = _get_fresh_element_center(element_id, page, obseration_processor)
                 execute_mouse_click(element_center[0], element_center[1], page)
                 execute_type(action["text"], page)
             elif action["element_role"] and action["element_name"]:
