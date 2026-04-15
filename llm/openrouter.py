@@ -32,6 +32,7 @@ class ChatResult:
     completion_tokens: int | None
     latency_ms: int              # wall-clock of the HTTP call
     raw: dict[str, Any]          # full response body, for auditing
+    cost_usd: float | None = None  # actual cost from OpenRouter usage.cost
 
 
 class OpenRouterError(RuntimeError):
@@ -108,12 +109,15 @@ def chat_completion(
         ) from e
 
     usage = body.get("usage") or {}
+    cost_raw = usage.get("cost")
+    cost_usd = float(cost_raw) if cost_raw is not None else None
     return ChatResult(
         content=content,
         prompt_tokens=usage.get("prompt_tokens"),
         completion_tokens=usage.get("completion_tokens"),
         latency_ms=latency_ms,
         raw=body,
+        cost_usd=cost_usd,
     )
 
 

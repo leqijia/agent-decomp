@@ -13,6 +13,7 @@ Usage (on the VM):
 
 Trajectories are written to trajectories/data/<task_id>.json.
 A summary CSV is appended to trajectories/batch_log.csv after each task.
+Cumulative costs are tracked in budget.json at the repo root.
 """
 from __future__ import annotations
 
@@ -23,6 +24,7 @@ import os
 import random
 import sys
 import traceback
+from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -32,6 +34,7 @@ load_dotenv()
 _CONFIG_DIR = Path(__file__).parent.parent / "config_files"
 _OUT_DIR = Path(__file__).parent.parent / "trajectories" / "data"
 _LOG_PATH = Path(__file__).parent.parent / "trajectories" / "batch_log.csv"
+_BUDGET_PATH = Path(__file__).parent.parent / "budget.json"
 
 
 def _list_configs(config_dir: Path) -> list[Path]:
@@ -44,11 +47,56 @@ def _append_log(row: dict) -> None:
     with open(_LOG_PATH, "a", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=[
             "task_id", "sites", "total_steps", "stop_reason",
-            "success", "eval_score", "model",
+            "success", "eval_score", "model", "cost_usd",
         ])
         if write_header:
             writer.writeheader()
         writer.writerow(row)
+
+
+def _episode_cost(result) -> float:
+    """Sum cost_usd from all steps in an episode result."""
+    total = 0.0
+    for step in result.steps:
+        c = step.get("cost_usd")
+        if c is not None:
+            total += c
+    return round(total, 6)
+
+
+def _update_budget(episode_cost: float, model: str, task_id: int) -> dict:
+    """Atomically read-modify-write budget.json with this episode's cost."""
+    if _BUDGET_PATH.exists():
+        with open(_BUDGET_PATH) as f:
+            budget = json.load(f)
+    else:
+        budget = {
+            "total_cost_usd": 0.0,
+            "openrouter_budget_usd": 300.0,
+            "by_model": {},
+            "runs": [],
+        }
+
+    budget["total_cost_usd"] = round(budget["total_cost_usd"] + episode_cost, 6)
+    if model not in budget["by_model"]:
+        budget["by_model"][model] = {"cost_usd": 0.0, "episodes": 0}
+    budget["by_model"][model]["cost_usd"] = round(
+        budget["by_model"][model]["cost_usd"] + episode_cost, 6
+    )
+    budget["by_model"][model]["episodes"] += 1
+    budget["runs"].append({
+        "task_id": task_id,
+        "model": model,
+        "cost_usd": episode_cost,
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    })
+    budget["remaining_usd"] = round(
+        budget["openrouter_budget_usd"] - budget["total_cost_usd"], 6
+    )
+
+    with open(_BUDGET_PATH, "w") as f:
+        json.dump(budget, f, indent=2)
+    return budget
 
 
 def main() -> None:
@@ -75,7 +123,6 @@ def main() -> None:
     config_dir = Path(args.config_dir)
     out_dir = Path(args.out_dir)
 
-    # Deferred import so --help is fast
     from agent.react_agent import EpisodeConfig, run_episode
 
     all_configs = _list_configs(config_dir)
@@ -98,6 +145,7 @@ def main() -> None:
     print(f"Running {len(configs)} tasks with {args.model}, max_steps={args.max_steps}")
     print(f"Output: {out_dir}/")
 
+    batch_cost = 0.0
     for i, config_path in enumerate(configs):
         task_id = int(config_path.stem)
         out_path = out_dir / f"{task_id}.json"
@@ -116,10 +164,16 @@ def main() -> None:
                 thinking=args.thinking,
             )
             result = run_episode(cfg, out_path=out_path)
+            ep_cost = _episode_cost(result)
+            batch_cost += ep_cost
+            budget = _update_budget(ep_cost, args.model, task_id)
             print(
                 f"steps={result.total_steps} "
                 f"stop={result.stop_reason} "
-                f"score={result.eval_score}"
+                f"score={result.eval_score} "
+                f"cost=${ep_cost:.4f} "
+                f"(total=${budget['total_cost_usd']:.4f}, "
+                f"remaining=${budget['remaining_usd']:.2f})"
             )
             _append_log({
                 "task_id": result.task_id,
@@ -129,6 +183,7 @@ def main() -> None:
                 "success": result.success,
                 "eval_score": result.eval_score,
                 "model": result.model,
+                "cost_usd": ep_cost,
             })
         except Exception:
             print(f"CRASH")
@@ -141,9 +196,15 @@ def main() -> None:
                 "success": None,
                 "eval_score": None,
                 "model": args.model,
+                "cost_usd": 0.0,
             })
 
-    print("Batch complete.")
+    print(f"\nBatch complete. Batch cost: ${batch_cost:.4f}")
+    if _BUDGET_PATH.exists():
+        with open(_BUDGET_PATH) as f:
+            budget = json.load(f)
+        print(f"Cumulative spend: ${budget['total_cost_usd']:.4f} / ${budget['openrouter_budget_usd']:.0f} "
+              f"(${budget['remaining_usd']:.2f} remaining)")
 
 
 if __name__ == "__main__":

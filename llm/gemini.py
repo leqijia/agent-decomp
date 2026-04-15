@@ -123,4 +123,5 @@ def chat_completion(
         completion_tokens=completion_tokens,
         latency_ms=latency_ms,
         raw={"model": model, "usage": str(usage)},
+        cost_usd=None,
     )

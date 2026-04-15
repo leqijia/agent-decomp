@@ -287,6 +287,7 @@ def run_episode(cfg: EpisodeConfig, *, out_path: str | Path | None = None) -> Ep
                         _make_step_dict(
                             t, step_url, obs_truncated, "", raw_prediction,
                             "", parse_error, prompt_tokens, completion_tokens, latency_ms,
+                            cost_usd=None,
                         )
                     )
                     result.total_steps = t
@@ -299,6 +300,9 @@ def run_episode(cfg: EpisodeConfig, *, out_path: str | Path | None = None) -> Ep
                 prompt_tokens = chat.prompt_tokens
                 completion_tokens = chat.completion_tokens
                 latency_ms = chat.latency_ms
+                step_cost = chat.cost_usd
+            else:
+                step_cost = None
 
             try:
                 action_str = extract_action(template, raw_prediction)
@@ -319,6 +323,7 @@ def run_episode(cfg: EpisodeConfig, *, out_path: str | Path | None = None) -> Ep
                 _make_step_dict(
                     t, step_url, obs_truncated, thought, raw_prediction,
                     action_str, parse_error, prompt_tokens, completion_tokens, latency_ms,
+                    cost_usd=step_cost,
                 )
             )
             result.total_steps = t
@@ -421,9 +426,10 @@ def _make_step_dict(
     prompt_tokens: int | None,
     completion_tokens: int | None,
     latency_ms: int,
+    cost_usd: float | None = None,
 ) -> dict[str, Any]:
     """Build one step record in the exact shape trajectories/SPEC.md requires."""
-    return {
+    d = {
         "t": t,
         "url": url,
         "observation": observation,
@@ -435,3 +441,6 @@ def _make_step_dict(
         "completion_tokens": completion_tokens,
         "latency_ms": latency_ms,
     }
+    if cost_usd is not None:
+        d["cost_usd"] = cost_usd
+    return d
