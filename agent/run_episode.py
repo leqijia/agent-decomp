@@ -36,7 +36,8 @@ def main() -> None:
         "--model", default=os.environ.get("AGENT_MODEL", "qwen/qwen3.5-27b"),
         help="Model slug — OpenRouter (default: $AGENT_MODEL from .env)",
     )
-    parser.add_argument("--max-steps", type=int, default=30)
+    parser.add_argument("--max-steps", type=int, default=None,
+                        help="Override max steps (default: use EpisodeConfig default)")
     parser.add_argument("--max-obs-length", type=int, default=4096)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument(
@@ -61,20 +62,32 @@ def main() -> None:
     # Deferred import so --help is fast and doesn't require playwright
     from agent.react_agent import EpisodeConfig, run_episode
 
+    # Refresh auth cookies before running the episode.
+    print("Refreshing auth cookies ...", end=" ", flush=True)
+    try:
+        from webarena.browser_env.auto_login import main as auto_login_main
+        auto_login_main()
+        print("done.")
+    except Exception as e:
+        print(f"WARNING: auto_login failed ({e}). Cookies may be stale.")
+
     with open(args.config_file) as f:
         task_id = json.load(f)["task_id"]
 
     out_path = Path(args.out_dir) / f"{task_id}.json"
 
-    cfg = EpisodeConfig(
-        config_file=args.config_file,
-        model=args.model,
-        max_steps=args.max_steps,
-        temperature=args.temperature,
-        max_obs_length=args.max_obs_length,
-        headless=args.headless,
-        thinking=args.thinking,
-    )
+    episode_kwargs: dict = {
+        "config_file": args.config_file,
+        "model": args.model,
+        "temperature": args.temperature,
+        "max_obs_length": args.max_obs_length,
+        "headless": args.headless,
+        "thinking": args.thinking,
+    }
+    if args.max_steps is not None:
+        episode_kwargs["max_steps"] = args.max_steps
+
+    cfg = EpisodeConfig(**episode_kwargs)
 
     print(f"Running task {task_id} with {cfg.model}, max_steps={cfg.max_steps}")
     result = run_episode(cfg, out_path=out_path)

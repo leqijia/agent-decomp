@@ -108,7 +108,8 @@ def main() -> None:
     parser.add_argument("--config-dir", default=str(_CONFIG_DIR))
     parser.add_argument("--out-dir", default=str(_OUT_DIR))
     parser.add_argument("--model", default=os.environ.get("AGENT_MODEL", "qwen/qwen3.5-27b"))
-    parser.add_argument("--max-steps", type=int, default=30)
+    parser.add_argument("--max-steps", type=int, default=None,
+                        help="Override max steps (default: use EpisodeConfig default)")
     parser.add_argument("--seed", type=int, default=42, help="RNG seed for --sample")
     parser.add_argument(
         "--thinking", action="store_true", default=True,
@@ -142,7 +143,26 @@ def main() -> None:
     else:
         configs = all_configs
 
-    print(f"Running {len(configs)} tasks with {args.model}, max_steps={args.max_steps}")
+    # Refresh auth cookies for all sites before running any episodes.
+    # This avoids the need to manually run auto_login.py before each batch.
+    print("Refreshing auth cookies ...", end=" ", flush=True)
+    try:
+        from webarena.browser_env.auto_login import main as auto_login_main
+        auto_login_main()
+        print("done.")
+    except Exception as e:
+        print(f"WARNING: auto_login failed ({e}). Cookies may be stale.")
+
+    # Build kwargs for EpisodeConfig; only override max_steps if explicitly set.
+    episode_kwargs: dict = {
+        "model": args.model,
+        "thinking": args.thinking,
+    }
+    if args.max_steps is not None:
+        episode_kwargs["max_steps"] = args.max_steps
+
+    effective_max = args.max_steps if args.max_steps is not None else EpisodeConfig.max_steps
+    print(f"Running {len(configs)} tasks with {args.model}, max_steps={effective_max}")
     print(f"Output: {out_dir}/")
 
     batch_cost = 0.0
@@ -159,9 +179,7 @@ def main() -> None:
         try:
             cfg = EpisodeConfig(
                 config_file=str(config_path),
-                model=args.model,
-                max_steps=args.max_steps,
-                thinking=args.thinking,
+                **episode_kwargs,
             )
             result = run_episode(cfg, out_path=out_path)
             ep_cost = _episode_cost(result)
