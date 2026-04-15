@@ -38,7 +38,7 @@ def load_trajectories():
             continue
         fpath = os.path.join(TRAJ_DIR, fname)
         try:
-            with open(fpath, encoding="utf-8") as f:
+            with open(fpath, encoding='utf-8', errors='ignore') as f:
                 traj = json.load(f)
         except (json.JSONDecodeError, OSError):
             continue
