@@ -55,10 +55,6 @@ def main() -> None:
         "--no-thinking", action="store_false", dest="thinking",
         help="Disable thinking mode",
     )
-    parser.add_argument(
-        "--thinking-budget", type=int, default=1024,
-        help="Token budget for thinking mode (default: 1024)",
-    )
 
     args = parser.parse_args()
 
@@ -78,7 +74,6 @@ def main() -> None:
         max_obs_length=args.max_obs_length,
         headless=args.headless,
         thinking=args.thinking,
-        thinking_budget=args.thinking_budget,
     )
 
     print(f"Running task {task_id} with {cfg.model}, max_steps={cfg.max_steps}")

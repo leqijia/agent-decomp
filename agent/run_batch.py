@@ -70,10 +70,6 @@ def main() -> None:
         "--no-thinking", action="store_false", dest="thinking",
         help="Disable thinking mode",
     )
-    parser.add_argument(
-        "--thinking-budget", type=int, default=1024,
-        help="Token budget for thinking mode (default: 1024)",
-    )
 
     args = parser.parse_args()
     config_dir = Path(args.config_dir)
@@ -118,7 +114,6 @@ def main() -> None:
                 model=args.model,
                 max_steps=args.max_steps,
                 thinking=args.thinking,
-                thinking_budget=args.thinking_budget,
             )
             result = run_episode(cfg, out_path=out_path)
             print(
