@@ -50,3 +50,14 @@ Baselines (High-level)
 - Harness follow-up (not in this package): wire a context_policy that calls
   compress_trajectory during rollouts so paired trajectories can be produced
   automatically; see harness/SPEC.md.
+
+6) Perfect retrieval baseline (baselines/perfect_retrieval.py)
+- Oracle upper bound: at simulated decision time for SPEC step t, embed each
+  prior step (t' < t) as one chunk (format_step_line + optional url= line).
+- Query embedding uses the logged ground-truth for this step: action, else
+  thought, else truncated raw_prediction.
+- Top-k past chunks by cosine similarity; assembled in chronological order.
+- Pass injectable embed_fn(texts)->(n,d) array; use deterministic_embed_fn()
+  for tests without API keys.
+- Not deployable as-is: real retrieval cannot use future logged actions.
+  Wire via harness context_policy only for oracle / analysis modes.
