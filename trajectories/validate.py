@@ -40,12 +40,13 @@ class output_mapper:
         error_data = {}
         for key, value in data.items():
             if key in self.field_map:
-                #print(key , ":" , value)
                 if isinstance(value, list) :
-                   s,e = self.handle_steps_array(key,value) 
-                   if s:
+                   s,e = self.handle_array(key,value)
+                   if not s and not e:
+                       success_data[key] = value
+                   elif s:
                       success_data[key] = s
-                   if e:
+                   elif e:
                        error_data[key] = e 
                 else:
                     b = self.validate_stop_reason(key,value)
@@ -59,7 +60,7 @@ class output_mapper:
         self.summarize(success_data,error_data)        
                 
 
-    def handle_steps_array(self, key, value):
+    def handle_array(self, key, value):
         success_steps = []
         error_steps = []
         if key.lower() != "steps":
