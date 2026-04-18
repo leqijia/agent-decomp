@@ -1,6 +1,7 @@
 import json
-""" from  webarena.browser_env.actions import create_id_based_action
-from  webarena.browser_env.actions import ActionParsingError """
+
+from webarena.browser_env.actions import ActionParsingError, create_id_based_action
+
 class output_mapper:
     def __init__(self, success_file, error_file):
         self.success_file = success_file
@@ -100,8 +101,13 @@ class output_mapper:
        if (action == "") == (parse_error is not None):
            return True
        else:
-           return False
-    
+           # if its a valid action
+            try:
+                create_id_based_action(action)
+                return True
+            except ActionParsingError:
+                return False
+
     def validate_total_steps(self,data,key):
         if key != "total_steps":
             return True
@@ -120,7 +126,7 @@ class output_mapper:
     
     def write_json(self, file_name, data):
         if not data:
-            print(f"Skipping file {file_name} (no data)")
+            print(f"No error file created for {file_name} (no data)")
             return
 
         with open(file_name, "w", encoding="utf-8") as f:
