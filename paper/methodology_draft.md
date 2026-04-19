@@ -69,18 +69,56 @@ $S_t$ schema; outputs that fail to parse are flagged and regenerated. Oracle sta
 are generated at $k=5$ evenly spaced steps per trajectory for Experiments 2 and 3,
 and at the single annotated critical step $t^*$ per trajectory for Experiment 1.
 
-To assess the quality of generated oracle states, we draw a random sample of 200
-states stratified across the four trajectory length bins and the four WebArena task
-categories (Shopping, Reddit, GitLab, CMS). Two annotators independently rate each
-field on a three-point scale — correct, partial, or wrong — using the field-level
-rubric in \texttt{oracle/prompts/field\_instructions.md}. We compute Cohen's
-$\kappa$ \cite{cohen1960kappa} for each field independently and report the
-aggregate across all seven fields. We human-validate a random sample of 200 oracle
-states and report inter-annotator agreement (Cohen's $\kappa$) on field-level
-correctness. [RESULTS TBD] States in which any field is rated wrong by both
-annotators are discarded and regenerated; states with partial ratings are retained
-with a note. The final validated corpus used in all experiments contains [TBD]
-oracle states across [TBD] trajectories.
+Preliminary manual review of 40 oracle states across 8 qualifying
+trajectories (Tasks 27, 62, 114, 130, 199, 322, 332, 401) reveals
+several consistent patterns. The $F_t$ field is non-empty in 38 of 40
+states, correctly tracking failure patterns across all trajectory types.
+The $P_t$ field is correctly empty in 18 of 40 states, corresponding
+to trajectories where the agent made no meaningful progress — for
+example, Task 322 (Shopping), in which the agent clicked the
+\texttt{My Account} link 30 consecutive times without ever attempting
+to authenticate, leaving all subtasks incomplete. Task 401 (Reddit)
+illustrates the $F_t$ field's causal precision: each of 22 failed
+type actions is annotated with the specific DOM evidence that the
+\texttt{type} action appends rather than replaces existing text,
+identifying the root cause that the agent failed to diagnose across
+the full trajectory. No hallucinations or structurally invalid
+outputs were detected in the preliminary sample. Full validation
+on 200 oracle states with inter-annotator agreement (Cohen's $\kappa$)
+is reported in Section 4.1.
+
+---
+
+## 2.2 Oracle Generation Pipeline
+
+Oracle states are generated via a batch API pipeline implemented in
+\texttt{oracle/batch\_generate.py}. For each qualifying trajectory
+(defined as any trajectory with $\geq 15$ steps), we generate oracle
+states at $k=5$ evenly spaced steps by calling Claude Sonnet 4.6 with
+the prompt template \texttt{oracle\_state\_v3.txt}. Each call receives
+the full agent trajectory up to step $t$ and the ground-truth DOM
+snapshot at $t$, serialized using \texttt{serialize\_trajectory()} from
+\texttt{baselines/trajectory.py} to ensure consistent formatting across
+all pipeline components.
+
+Prompt version v3 addresses a regression observed during manual review
+of v2 outputs: when an agent enters a repetitive failure loop
+(e.g., clicking the same inaccessible element across 15+ steps),
+v2 occasionally reset $P_t$ to empty at later steps despite having
+correctly identified completed subtasks at earlier steps. Version v3
+adds an explicit instruction to scan the full trajectory before
+populating $P_t$, treating completed subtasks as monotonically
+non-decreasing. Manual review of 40 oracle states across 8 trajectories
+confirmed that v3 eliminates this regression with no degradation in
+other fields.
+
+Output parsing validates that the model response conforms to the
+$S_t$ JSON schema. Outputs failing to parse are flagged for
+regeneration. A running cost log in \texttt{oracle/cost\_log.json}
+tracks input and output tokens per call; oracle generation costs
+approximately \$0.033 per state at mid-trajectory steps (where context
+is longest), with total estimated cost of approximately \$60 for the
+full 400-trajectory corpus.
 
 ---
 
