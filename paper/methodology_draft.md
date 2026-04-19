@@ -8,8 +8,11 @@
 | Section | Status |
 |---|---|
 | 2.1 Oracle State Definition | Draft complete — awaiting human validation numbers |
+| 2.2 Oracle Generation Pipeline | Draft complete |
+| 2.3 Evaluation Harness | Draft complete |
 | 2.4 Experiment 2: Performance-Length Scaling | Draft complete — awaiting results |
 | 2.5 Experiment 3: Self-Generated vs. External State | Draft complete — awaiting results |
+| Results §4.1 Oracle Validation | Draft complete — awaiting kappa numbers |
 | Results §4.2 Experiment 2 | Structure and prose complete — tables/figures TBD |
 | Results §4.3 Experiment 3 | Structure and prose complete — tables/figures TBD |
 | Results §4.4 Ablation | Structure and prose complete — tables/figures TBD |
@@ -122,6 +125,48 @@ full 400-trajectory corpus.
 
 ---
 
+## 2.3 Evaluation Harness
+
+All experiments are executed through a unified evaluation harness
+implemented in \texttt{harness/evaluator.py}. The harness exposes
+three core functions: \texttt{run\_episode()}, which runs a single
+agent episode under a specified context policy and returns a result
+dict containing the task success flag, step count, token usage, and
+per-step action log; \texttt{run\_intervention()}, which restores the
+WebArena environment to a specified checkpoint state, replaces the
+agent's context according to a given policy, and resumes execution
+from step $t^*$; and \texttt{evaluate\_batch()}, which applies either
+function across a list of trajectories and aggregates results.
+
+Context policies are registered in \texttt{harness/conditions.py} and
+implement a common interface: given the steps observed so far, the
+current task intent, and optionally a set of pre-generated oracle
+states, each policy returns the context string to be prepended to the
+agent's next prompt. Nine conditions are currently registered: raw
+(no augmentation), sliding window at 4K/8K/16K tokens, observation
+masking, ACON-style compression, AgentDiet-style heuristic filtering,
+perfect retrieval, oracle external, and oracle ablation. The ablation
+condition accepts a \texttt{ablate\_field} parameter specifying which
+of the seven $S_t$ fields to zero out, enabling systematic field-removal
+experiments without modifying the oracle generation pipeline.
+
+The oracle external policy integrates directly with the oracle
+generation pipeline: at every $k$ steps, \texttt{\_oracle\_external\_policy()}
+calls \texttt{build\_prompt()} and \texttt{call\_oracle()} from
+\texttt{oracle/generate\_oracle.py}, passing the current trajectory
+and the agent's most recent observation as an interim DOM representation.
+This design decouples oracle generation from harness execution, allowing
+oracle states to be pre-generated offline for batch experiments or
+regenerated live during interactive runs. The harness is tested by
+six unit tests in \texttt{harness/test\_harness.py} covering episode
+execution, intervention correctness, and policy registration, and four
+metric tests in \texttt{harness/test\_metrics.py} covering
+\texttt{compute\_alpha\_decomposition()},
+\texttt{compute\_cohens\_kappa()}, \texttt{compute\_gamma\_L()}, and
+\texttt{compute\_delta\_synth()}.
+
+---
+
 ## 2.4 Experiment 2: Performance-Length Scaling
 
 Experiment 2 asks whether context degradation is uniform across trajectory lengths
@@ -200,6 +245,59 @@ pointing to a reasoning limitation rather than a context-length effect. The
 sensitivity analysis over $k$ tests a secondary claim: that more frequent
 regeneration (smaller $k$) reduces $\delta_\text{synth}$ by limiting the window
 over which the agent's observations can become stale.
+
+---
+
+## 4.1 Results: Oracle State Validation
+
+Table~\ref{tab:oracle_validation} reports field-level correctness
+scores from human review of [TBD] oracle states, together with
+inter-annotator agreement (Cohen's $\kappa$) between the two
+independent raters.
+
+\begin{table}[h]
+\centering
+\caption{Oracle state field-level validation. Correctness is the
+         fraction of states rated correct by both annotators.
+         $\kappa$ is Cohen's inter-annotator agreement per field.}
+\label{tab:oracle_validation}
+\begin{tabular}{llrr}
+\hline
+\textbf{Field} & \textbf{Description} & \textbf{Correctness} & $\mathbf{\kappa}$ \\
+\hline
+$g$   & Task goal          & [TBD] & [TBD] \\
+$P_t$ & Completed subtasks & [TBD] & [TBD] \\
+$R_t$ & Remaining subtasks & [TBD] & [TBD] \\
+$e_t$ & Environment state  & [TBD] & [TBD] \\
+$C$   & Constraints        & [TBD] & [TBD] \\
+$F_t$ & Failed attempts    & [TBD] & [TBD] \\
+$K_t$ & Key facts          & [TBD] & [TBD] \\
+\hline
+Overall & All fields & [TBD] & [TBD] \\
+\hline
+\end{tabular}
+\end{table}
+
+Inter-annotator agreement is [TBD: substantial / moderate] overall
+($\kappa = $ [TBD]), with the highest agreement on $g$ (task goal,
+which is copied verbatim from the task specification and thus
+unambiguous) and $P_t$ (completed subtasks, which can be verified
+against the DOM). Agreement is lowest on $F_t$ (failed attempts),
+where raters must judge whether a causal attribution is sufficiently
+grounded in DOM evidence — a distinction that requires understanding
+of both the agent's action semantics and the DOM representation.
+[TBD] states in which any field was rated wrong by both annotators
+were discarded and regenerated before use in experiments; the final
+validated corpus contains [TBD] oracle states across [TBD] trajectories.
+
+Preliminary review of 40 oracle states prior to full validation
+revealed no hallucinations or structurally invalid outputs, suggesting
+that the validation discard rate will be low. The $F_t$ field showed
+the most substantive variation: in trajectories where the agent enters
+a repetitive loop (e.g., Task 322, 30 consecutive identical clicks),
+$F_t$ correctly grows from 1 to 30 entries across steps, demonstrating
+that the oracle tracks cumulative failure history rather than only the
+most recent failure.
 
 ---
 
@@ -361,6 +459,10 @@ regeneration.
 
 Results to fill in once experiments are complete:
 
+- [ ] Overall Cohen's $\kappa$ for oracle validation — Table 1 (Section 4.1)
+- [ ] Per-field correctness and $\kappa$ — Table 1 (Section 4.1)
+- [ ] Final oracle state count after discards (Section 4.1)
+- [ ] Number of states discarded and regenerated (Section 4.1)
 - [ ] Overall Cohen's $\kappa$ for oracle state quality (Section 2.1)
 - [ ] Per-field $\kappa$ values for all 7 fields (Section 2.1)
 - [ ] Final validated oracle state count (Section 2.1)
@@ -398,4 +500,6 @@ Figures to produce:
 | \cite{liu2023lostinthemiddle} — Lost in the Middle (long-context degradation) | §2.4, §4.2 | arXiv:2307.03172 |
 | \cite{cohen1960kappa} — Cohen's kappa | §2.1 | Cohen (1960), Educ. Psych. Meas. |
 | \cite{shinn2023reflexion} — Reflexion (agent self-reflection) | §2.5, §4.3 | arXiv:2303.11366 |
+| \cite{agentsmarathon2025} — Agent's Marathon (long-horizon agent scaling) | §2.4, §4.2 | OpenReview 2025 |
+| \cite{sinha2025context} — Sinha et al. context degradation mechanism | §2.4, §4.2 | arXiv:2509.09677 |
 | Prior work on state tracking in interactive agents | §1 (intro, related work) | TBD — search ACL Anthology |
