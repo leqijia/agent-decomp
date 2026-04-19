@@ -201,7 +201,7 @@ def run_episode(
     config_file: str,
     *,
     model: str = AGENT_MODEL,
-    max_steps: int = 30,
+    max_steps: int = 50,
     max_obs_length: int = 4096,
     temperature: float = 0.0,
     window_size: int | None = None,
@@ -514,7 +514,7 @@ def run_intervention(
     replacement_context: str,
     *,
     model: str = AGENT_MODEL,
-    max_steps: int = 30,
+    max_steps: int = 50,
     max_obs_length: int = 4096,
     temperature: float = 0.0,
     out_path: str | None = None,
@@ -918,7 +918,12 @@ def compute_metrics(results: list[dict]) -> dict:
     scored = [r for r in results if r.get("success") is not None]
     success_rate = round(sum(1 for r in scored if r["success"]) / len(scored), 3) if scored else 0.0
 
-    token_vals = [r.get("tokens_used", 0) for r in results]
+    def _total_tokens(r: dict) -> int:
+        return sum(
+            (s.get("prompt_tokens") or 0) + (s.get("completion_tokens") or 0)
+            for s in r.get("steps", [])
+        )
+    token_vals = [_total_tokens(r) for r in results]
     avg_tokens = round(sum(token_vals) / len(results), 1) if results else 0.0
 
     eval_scored = [r["eval_score"] for r in results if r.get("eval_score") is not None]

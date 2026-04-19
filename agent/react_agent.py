@@ -235,8 +235,10 @@ def run_episode(cfg: EpisodeConfig, *, out_path: str | Path | None = None) -> Ep
         upstream_traj.append(state_info)
 
         previous_action_str = "None"
+        previous_obs: str = ""
         recent_parse_failures = 0
         recent_actions: list[str] = []
+        recent_obs_changed: list[bool] = []
 
         for t in range(1, cfg.max_steps + 1):
             step_url = env.page.url
@@ -339,10 +341,13 @@ def run_episode(cfg: EpisodeConfig, *, out_path: str | Path | None = None) -> Ep
                 continue
             recent_parse_failures = 0
 
+            obs_changed = obs_truncated != previous_obs
             recent_actions.append(action_str)
+            recent_obs_changed.append(obs_changed)
             if (
                 len(recent_actions) >= _EARLY_STOP_K
                 and all(_is_repeat(recent_actions[-1], a) for a in recent_actions[-_EARLY_STOP_K:])
+                and not any(recent_obs_changed[-_EARLY_STOP_K:])
             ):
                 result.stop_reason = "repeating_action"
                 break
@@ -361,6 +366,7 @@ def run_episode(cfg: EpisodeConfig, *, out_path: str | Path | None = None) -> Ep
             state_info = {"observation": obs, "info": info}
             upstream_traj.append(state_info)
             previous_action_str = action_str
+            previous_obs = obs_truncated
 
             if terminated:
                 result.stop_reason = "env_terminated"
@@ -371,8 +377,9 @@ def run_episode(cfg: EpisodeConfig, *, out_path: str | Path | None = None) -> Ep
         # Scoring requires a trajectory ending in an Action. If we broke out
         # on max_steps or env_terminated with a StateInfo at the tail, append
         # a synthetic stop action so the evaluator can read the last state.
-        if upstream_traj and not isinstance(upstream_traj[-1], dict) or (
-            upstream_traj and "action_type" not in upstream_traj[-1]
+        if upstream_traj and (
+            not isinstance(upstream_traj[-1], dict)
+            or "action_type" not in upstream_traj[-1]
         ):
             upstream_traj.append(create_stop_action(""))
 
