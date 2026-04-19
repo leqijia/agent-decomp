@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
+from oracle.generate_oracle import build_prompt, call_oracle
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -157,6 +158,12 @@ def _oracle_external_policy(
     if oracle_states is None:
         return serialize_trajectory(steps_so_far)
     current_t = len(steps_so_far)
+
+    if current_t % regen_every_k == 0:
+        prompt = build_prompt(intent, steps_so_far, current_observation, current_t)
+        result = call_oracle(prompt, use_stub=False)
+        oracle_states[current_t] = result["content"]
+
     latest_oracle_t = None
     for t in sorted(oracle_states.keys(), reverse=True):
         if t <= current_t:
