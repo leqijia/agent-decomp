@@ -1632,8 +1632,8 @@ def create_id_based_action(action_str: str) -> Action:
             key_comb = match.group(1)
             return create_key_press_action(key_comb=key_comb)
         case "scroll":
-            # up or down
-            match = re.search(r"scroll ?\[?(up|down)\]?", action_str)
+            # Accept both "scroll [down]" and "scroll [direction=down]"
+            match = re.search(r"scroll ?\[?(?:direction=)?(up|down)\]?", action_str)
             if not match:
                 raise ActionParsingError(f"Invalid scroll action {action_str}")
             direction = match.group(1)

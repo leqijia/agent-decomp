@@ -19,16 +19,11 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-from oracle.generate_oracle import build_prompt, call_oracle
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from baselines.acon import compress_trajectory
 from baselines.agentdiet import agentdiet_filter
-from baselines.perfect_retrieval import (
-    deterministic_embed_fn,
-    perfect_retrieve_context,
-)
 from baselines.trajectory import (
     mask_observations,
     serialize_trajectory,
@@ -61,17 +56,25 @@ def run_acon_compress(intent: str, steps: list[dict], guideline: str = "") -> di
 # Length-bin helper
 # ---------------------------------------------------------------------------
 
+LENGTH_BINS = ["<=10", "11-20", "21-35", "36-50", ">50"]
+
+
 def _length_bin(total_steps: int) -> str:
+    """Assign a trajectory to a length bin.
+
+    Bins adjusted from the proposal (<=10, 11-20, 21-40, 41-80) to reflect
+    WebArena's actual moderate horizon (max_steps=50).
+    """
     if total_steps <= 10:
         return "<=10"
     elif total_steps <= 20:
         return "11-20"
-    elif total_steps <= 40:
-        return "21-40"
-    elif total_steps <= 80:
-        return "41-80"
+    elif total_steps <= 35:
+        return "21-35"
+    elif total_steps <= 50:
+        return "36-50"
     else:
-        return ">80"
+        return ">50"
 
 
 # ---------------------------------------------------------------------------
@@ -117,24 +120,6 @@ def _acon_policy(
     return result["compressed_text"]
 
 
-def _perfect_retrieval_policy(
-    steps_so_far: list[dict],
-    current_observation: str,
-    intent: str,
-    *,
-    k: int = 5,
-) -> str:
-    if len(steps_so_far) < 2:
-        return serialize_trajectory(steps_so_far)
-
-    t = len(steps_so_far)
-    embed_fn = deterministic_embed_fn()
-    result = perfect_retrieve_context(
-        steps_so_far, t, k=k, embed_fn=embed_fn
-    )
-    return result.assembled_context
-
-
 def _env_only_policy(
     steps_so_far: list[dict], current_observation: str, intent: str
 ) -> str:
@@ -158,12 +143,6 @@ def _oracle_external_policy(
     if oracle_states is None:
         return serialize_trajectory(steps_so_far)
     current_t = len(steps_so_far)
-
-    if current_t % regen_every_k == 0:
-        prompt = build_prompt(intent, steps_so_far, current_observation, current_t)
-        result = call_oracle(prompt, use_stub=False)
-        oracle_states[current_t] = result["content"]
-
     latest_oracle_t = None
     for t in sorted(oracle_states.keys(), reverse=True):
         if t <= current_t:
@@ -208,9 +187,7 @@ def _build_context_policy(
             )
         return _oe
     elif policy_name == "perfect_retrieval":
-        def _pr(steps, obs, intent):
-            return _perfect_retrieval_policy(steps, obs, intent)
-        return _pr
+        return _identity_policy
     else:
         raise ValueError(f"Unknown policy: {policy_name}")
 
@@ -955,8 +932,9 @@ def compute_metrics(results: list[dict]) -> dict:
         bin_key = _length_bin(total_steps)
         bins.setdefault(bin_key, []).append(r)
 
-    by_length_bin = {}
-    for bin_key, bin_results in bins.items():
+    by_length_bin: dict[str, dict] = {}
+    for bin_key in LENGTH_BINS:
+        bin_results = bins.get(bin_key, [])
         bin_scored = [r for r in bin_results if r.get("success") is not None]
         bin_success_rate = (
             round(sum(1 for r in bin_scored if r["success"]) / len(bin_scored), 3)
@@ -964,15 +942,24 @@ def compute_metrics(results: list[dict]) -> dict:
         )
         bin_eval = [r["eval_score"] for r in bin_results if r.get("eval_score") is not None]
         bin_avg_eval = round(sum(bin_eval) / len(bin_eval), 3) if bin_eval else 0.0
+
+        from collections import Counter
+        stop_reasons = Counter(r.get("stop_reason", "unknown") for r in bin_results)
+
         by_length_bin[bin_key] = {
+            "count": len(bin_results),
             "success_rate": bin_success_rate,
             "avg_eval_score": bin_avg_eval,
-            "count": len(bin_results),
+            "stop_reasons": dict(stop_reasons),
         }
 
+    total_stop = Counter(r.get("stop_reason", "unknown") for r in results)
+
     return {
+        "total": len(results),
         "success_rate": success_rate,
         "avg_tokens": avg_tokens,
         "avg_eval_score": avg_eval_score,
+        "stop_reasons": dict(total_stop),
         "by_length_bin": by_length_bin,
     }

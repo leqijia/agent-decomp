@@ -9,8 +9,10 @@ def main(argv: list | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="Batch run trajectories.result_parser over all JSON files in an input directory."
     )
-    parser.add_argument("--input-dir", required=True, help="Directory containing JSON files")
-    parser.add_argument("--output-dir", required=True, help="Directory to write success and error files")
+    parser.add_argument("--input-dir", default="trajectories/data",
+                        help="Directory containing raw trajectory JSON files (default: trajectories/data)")
+    parser.add_argument("--output-dir", default="trajectories/processed",
+                        help="Directory to write processed files (default: trajectories/processed)")
 
     args = parser.parse_args(argv[1:] if argv is not None else None)
 

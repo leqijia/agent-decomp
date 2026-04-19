@@ -17,14 +17,6 @@ from .agentdiet import (
     dedup_observations,
     remove_expired_navigations,
 )
-from .perfect_retrieval import (
-    ChunkRecord,
-    PerfectRetrievalResult,
-    chunk_text_for_step,
-    deterministic_embed_fn,
-    perfect_retrieve_context,
-    steps_to_chunks,
-)
 from .trajectory import (
     DEFAULT_ENCODING_NAME,
     DEFAULT_OBSERVATION_PLACEHOLDER,
@@ -44,12 +36,6 @@ from .trajectory import (
 )
 
 __all__ = [
-    "ChunkRecord",
-    "PerfectRetrievalResult",
-    "chunk_text_for_step",
-    "deterministic_embed_fn",
-    "perfect_retrieve_context",
-    "steps_to_chunks",
     "agentdiet_filter",
     "compress_failed_runs",
     "dedup_observations",
