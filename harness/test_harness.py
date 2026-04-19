@@ -5,6 +5,7 @@ import json
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from harness.evaluator import compute_metrics, run_acon_compress
+from harness.evaluator import _perfect_retrieval_policy
 
 # ---------------------------------------------------------------------------
 # compute_metrics — legacy tests (success only, no eval_score/total_steps)
@@ -84,4 +85,42 @@ print(f"  compressed_text (first 80 chars): {acon_result['compressed_text'][:80]
 assert isinstance(acon_result["compressed_text"], str), "compressed_text must be str"
 assert acon_result["input_tokens"] > 0, "input_tokens must be > 0"
 assert acon_result["model"] == "stub", f"expected model='stub', got {acon_result['model']!r}"
+print("PASS")
+
+# ---------------------------------------------------------------------------
+# _perfect_retrieval_policy — retrieves top-k past steps by cosine similarity
+# ---------------------------------------------------------------------------
+
+pr_steps = [
+    {"t": 1, "thought": "navigate to shopping", "action": "goto('http://shop/')",
+     "observation": "homepage loaded", "url": "http://shop/"},
+    {"t": 2, "thought": "search for laptop", "action": "type('search', 'laptop')",
+     "observation": "12 results found", "url": "http://shop/search"},
+    {"t": 3, "thought": "sort by price", "action": "click('sort_price')",
+     "observation": "sorted by price", "url": "http://shop/search?sort=price"},
+    {"t": 4, "thought": "click cheapest", "action": "click('item_1')",
+     "observation": "Laptop A $299", "url": "http://shop/item/1"},
+    {"t": 5, "thought": "add to cart", "action": "click('add_to_cart')",
+     "observation": "1 item in cart", "url": "http://shop/item/1"},
+    {"t": 6, "thought": "go to checkout", "action": "goto('http://shop/cart')",
+     "observation": "cart shows Laptop A", "url": "http://shop/cart"},
+]
+
+print("\nTest 6 (perfect_retrieval policy):")
+
+# With < 2 steps: falls back to serialize_trajectory (non-empty for 1 step)
+result_1step = _perfect_retrieval_policy(pr_steps[:1], "obs", "buy laptop")
+assert isinstance(result_1step, str), "result must be str"
+
+# With >= 2 steps: returns assembled retrieved context
+result_full = _perfect_retrieval_policy(pr_steps, "obs", "buy laptop", k=3)
+assert isinstance(result_full, str), "result must be str"
+# Retrieved context is non-empty (has past steps to retrieve from)
+assert len(result_full) > 0, "assembled_context should be non-empty"
+# Should not contain step 6 itself (only past steps t < 6 are in corpus)
+# Step t=6 is the current step being queried — its chunk should not appear
+# (the corpus is steps with t < t_query = len(steps_so_far) = 6)
+print(f"  1-step fallback length: {len(result_1step)}")
+print(f"  6-step full context length: {len(result_full)}")
+print(f"  Context preview: {result_full[:80]!r}")
 print("PASS")

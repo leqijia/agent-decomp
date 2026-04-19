@@ -24,6 +24,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from baselines.acon import compress_trajectory
 from baselines.agentdiet import agentdiet_filter
+from baselines.perfect_retrieval import (
+    deterministic_embed_fn,
+    perfect_retrieve_context,
+)
 from baselines.trajectory import (
     mask_observations,
     serialize_trajectory,
@@ -112,6 +116,24 @@ def _acon_policy(
     return result["compressed_text"]
 
 
+def _perfect_retrieval_policy(
+    steps_so_far: list[dict],
+    current_observation: str,
+    intent: str,
+    *,
+    k: int = 5,
+) -> str:
+    if len(steps_so_far) < 2:
+        return serialize_trajectory(steps_so_far)
+
+    t = len(steps_so_far)
+    embed_fn = deterministic_embed_fn()
+    result = perfect_retrieve_context(
+        steps_so_far, t, k=k, embed_fn=embed_fn
+    )
+    return result.assembled_context
+
+
 def _env_only_policy(
     steps_so_far: list[dict], current_observation: str, intent: str
 ) -> str:
@@ -179,7 +201,9 @@ def _build_context_policy(
             )
         return _oe
     elif policy_name == "perfect_retrieval":
-        return _identity_policy
+        def _pr(steps, obs, intent):
+            return _perfect_retrieval_policy(steps, obs, intent)
+        return _pr
     else:
         raise ValueError(f"Unknown policy: {policy_name}")
 
