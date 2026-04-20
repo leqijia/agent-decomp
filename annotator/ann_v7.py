@@ -11,6 +11,7 @@ import gradio as gr
 
 TRAJECTORY_DIR = Path("trajectories/data")
 ANNOTATION_DIR = Path("annotations")
+CONFIG_DIR = Path("config_files")
 
 
 @dataclass
@@ -71,6 +72,19 @@ def load_trajectory(trajectory_id: str) -> Dict[str, Any]:
     return json.loads(path.read_text())
 
 
+def load_config_for_trajectory(trajectory: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    task_id = trajectory.get("task_id")
+    if task_id is None:
+        return None
+    path = CONFIG_DIR / f"{task_id}.json"
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
 def annotation_path(annotator_id: str, trajectory_id: str, create_dir: bool = False) -> Path:
     annotator_dir = ANNOTATION_DIR / annotator_id.strip()
     if create_dir:
@@ -116,6 +130,44 @@ def get_step_number(step: Dict[str, Any], fallback_idx: int) -> int:
     return fallback_idx
 
 
+def build_expected_answer_md(trajectory: Dict[str, Any]) -> str:
+    unavailable = "## Expected Answer\n_Reference answer unavailable for this trajectory._"
+
+    config = load_config_for_trajectory(trajectory)
+    if not config:
+        return unavailable
+
+    eval_block = config.get("eval")
+    if not isinstance(eval_block, dict):
+        return unavailable
+
+    eval_types = eval_block.get("eval_types") or []
+    reference_answers = eval_block.get("reference_answers")
+
+    lines = ["## Expected Answer"]
+
+    if eval_types:
+        lines.append(f"**Evaluator(s):** {', '.join(map(str, eval_types))}")
+    else:
+        lines.append("**Evaluator(s):** —")
+
+    has_reference_answers = isinstance(reference_answers, dict) and len(reference_answers) > 0
+    if has_reference_answers:
+        lines.append("**Reference answers:**")
+        lines.append("```json")
+        lines.append(json.dumps(reference_answers, indent=2, ensure_ascii=False))
+        lines.append("```")
+    else:
+        has_reference_url = bool(eval_block.get("reference_url"))
+        has_program_html = bool(eval_block.get("program_html"))
+        if has_reference_url or has_program_html:
+            lines.append("_Non-string evaluator — see config for full details._")
+        else:
+            lines.append("_Reference answer unavailable for this trajectory._")
+
+    return "\n".join(lines)
+
+
 def build_task_description(trajectory: Dict[str, Any], trajectory_id: str) -> str:
     if trajectory.get("task_description"):
         return f"## Task Description\n{trajectory['task_description']}"
@@ -138,6 +190,8 @@ def build_task_description(trajectory: Dict[str, Any], trajectory_id: str) -> st
         f"**Ended At:** {trajectory.get('ended_at', '—')}",
         f"**Eval Score:** {trajectory.get('eval_score', '—')}",
     ]
+    lines.append("")
+    lines.append(build_expected_answer_md(trajectory))
     return "\n".join(lines)
 
 
