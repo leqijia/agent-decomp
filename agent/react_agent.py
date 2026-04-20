@@ -72,7 +72,7 @@ class EpisodeConfig:
     config_file: str                 # WebArena task JSON path
     model: str                       # OpenRouter slug, e.g. qwen/qwen3.5-27b
     prompt_path: Path = DEFAULT_PROMPT_PATH
-    max_steps: int = 50
+    max_steps: int = 75
     temperature: float = 0.0
     max_obs_length: int = 4096
     observation_type: str = "accessibility_tree"

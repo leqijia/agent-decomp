@@ -22,7 +22,7 @@ same change.
   "agent_variant": "react",
   "observation_type": "accessibility_tree",
   "action_set_tag": "id_accessibility_tree",
-  "max_steps": 30,
+  "max_steps": 75,
   "temperature": 0.0,
   "max_obs_length": 1920,
 

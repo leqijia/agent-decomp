@@ -56,14 +56,14 @@ def run_acon_compress(intent: str, steps: list[dict], guideline: str = "") -> di
 # Length-bin helper
 # ---------------------------------------------------------------------------
 
-LENGTH_BINS = ["<=10", "11-20", "21-35", "36-50", ">50"]
+LENGTH_BINS = ["<=10", "11-20", "21-35", "36-50", "51-75", ">75"]
 
 
 def _length_bin(total_steps: int) -> str:
     """Assign a trajectory to a length bin.
 
     Bins adjusted from the proposal (<=10, 11-20, 21-40, 41-80) to reflect
-    WebArena's actual moderate horizon (max_steps=50).
+    WebArena's actual moderate horizon (max_steps=75).
     """
     if total_steps <= 10:
         return "<=10"
@@ -73,8 +73,10 @@ def _length_bin(total_steps: int) -> str:
         return "21-35"
     elif total_steps <= 50:
         return "36-50"
+    elif total_steps <= 75:
+        return "51-75"
     else:
-        return ">50"
+        return ">75"
 
 
 # ---------------------------------------------------------------------------
@@ -201,7 +203,7 @@ def run_episode(
     config_file: str,
     *,
     model: str = AGENT_MODEL,
-    max_steps: int = 50,
+    max_steps: int = 75,
     max_obs_length: int = 4096,
     temperature: float = 0.0,
     window_size: int | None = None,
@@ -514,7 +516,7 @@ def run_intervention(
     replacement_context: str,
     *,
     model: str = AGENT_MODEL,
-    max_steps: int = 50,
+    max_steps: int = 75,
     max_obs_length: int = 4096,
     temperature: float = 0.0,
     out_path: str | None = None,

@@ -119,8 +119,8 @@ def run_episode(
     config_file: str,                # WebArena task config path
     *,
     model: str = os.environ["AGENT_MODEL"],
-    max_steps: int = 30,
-    max_obs_length: int = 1920,
+    max_steps: int = 75,
+    max_obs_length: int = 4096,
     temperature: float = 0.0,
     window_size: int | None = None,          # required iff policy == sliding_window
     oracle_regen_every_k: int | None = None, # required iff policy == oracle_external
