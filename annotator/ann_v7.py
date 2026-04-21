@@ -9,9 +9,10 @@ from typing import Any, Dict, List, Optional, Tuple
 import gradio as gr
 
 
-TRAJECTORY_DIR = Path("trajectories/data")
-ANNOTATION_DIR = Path("annotations")
-CONFIG_DIR = Path("config_files")
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+TRAJECTORY_DIR = _REPO_ROOT / "trajectories" / "data"
+ANNOTATION_DIR = _REPO_ROOT / "annotations"
+CONFIG_DIR = _REPO_ROOT / "config_files"
 
 
 @dataclass
@@ -116,6 +117,30 @@ def count_completed_for_annotator(annotator_id: str) -> Tuple[int, int]:
     annotator_dir = ANNOTATION_DIR / annotator_id
     completed = len(list(annotator_dir.glob("*.json"))) if annotator_dir.exists() else 0
     return completed, total
+
+
+def build_peer_status() -> Dict[str, List[str]]:
+    """Return {trajectory_id: sorted list of annotator_ids who have saved an annotation}."""
+    ensure_dirs()
+    status: Dict[str, List[str]] = {}
+    for annot_dir in ANNOTATION_DIR.iterdir():
+        if not annot_dir.is_dir():
+            continue
+        for f in annot_dir.glob("*.json"):
+            status.setdefault(f.stem, []).append(annot_dir.name)
+    for tid in status:
+        status[tid].sort()
+    return status
+
+
+def build_dropdown_choices() -> List[Tuple[str, str]]:
+    peer = build_peer_status()
+    choices: List[Tuple[str, str]] = []
+    for tid in list_trajectory_ids():
+        annotators = peer.get(tid, [])
+        label = f"{tid}  \u2022  [{', '.join(annotators)}]" if annotators else tid
+        choices.append((label, tid))
+    return choices
 
 
 def get_steps(trajectory: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -587,15 +612,41 @@ def save_current_annotation(
     return f"Saved annotation to `{out_path}`. Progress: {completed}/{total}."
 
 
+def save_current_annotation_and_refresh(
+    annotator_id: str,
+    trajectory_id: str,
+    t_star_step: Optional[int],
+    failure_classification: Optional[str],
+    notes: str,
+    mode: str,
+):
+    message = save_current_annotation(
+        annotator_id=annotator_id,
+        trajectory_id=trajectory_id,
+        t_star_step=t_star_step,
+        failure_classification=failure_classification,
+        notes=notes,
+        mode=mode,
+    )
+    dropdown_update = gr.update(choices=build_dropdown_choices(), value=trajectory_id)
+    return message, dropdown_update
+
+
+def refresh_dropdown_choices(trajectory_id: str):
+    return gr.update(choices=build_dropdown_choices(), value=trajectory_id)
+
+
 def build_app() -> gr.Blocks:
     ensure_dirs()
-    trajectory_ids = list_trajectory_ids()
+    initial_choices = build_dropdown_choices()
+    initial_value = initial_choices[0][1] if initial_choices else None
 
     with gr.Blocks(title="Failed Trajectory Annotation Tool") as demo:
         gr.Markdown(
             "# Failed Trajectory Annotation Tool\n"
             "1. **t* labeling**: inspect the failed trajectory step by step and mark the first unrecoverable mistake.\n"
-            "2. **failure attribution**: review the locked t* step and save a classification."
+            "2. **failure attribution**: review the locked t* step and save a classification.\n"
+            "\nTrajectory labels show peer-completion badges, e.g. `task_308  \u2022  [Muhammad]`, so you can coordinate overlap for inter-annotator agreement."
         )
 
         trajectory_state = gr.State({})
@@ -606,10 +657,11 @@ def build_app() -> gr.Blocks:
             annotator_id = gr.Textbox(label="Annotator ID")
             trajectory_id = gr.Dropdown(
                 label="Trajectory ID",
-                choices=trajectory_ids,
-                value=trajectory_ids[0] if trajectory_ids else None,
+                choices=initial_choices,
+                value=initial_value,
                 interactive=True,
             )
+            refresh_btn = gr.Button("Refresh peer status", scale=0)
             mode = gr.Radio(
                 label="Annotation Mode",
                 choices=["t* labeling"],
@@ -728,9 +780,15 @@ def build_app() -> gr.Blocks:
         )
 
         save_btn.click(
-            fn=save_current_annotation,
+            fn=save_current_annotation_and_refresh,
             inputs=[annotator_id, trajectory_id, t_star_state, failure_classification, notes, mode],
-            outputs=[save_status],
+            outputs=[save_status, trajectory_id],
+        )
+
+        refresh_btn.click(
+            fn=refresh_dropdown_choices,
+            inputs=[trajectory_id],
+            outputs=[trajectory_id],
         )
 
     return demo
