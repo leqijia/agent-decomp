@@ -4,7 +4,7 @@ import sys
 sys.path.insert(0, '.')
 from harness.metrics import compute_cohens_kappa
 
-adithya_dir = 'annotator/annotations/Adithya'
+adithya_dir = 'annotations/Adithya'
 muhammad_dir = 'annotations/Muhammad'
 
 adithya = {}
