@@ -2,8 +2,8 @@ import json
 import os
 
 dirs = [
-    ('ADITHYA', 'annotations/Adithya'),
-    ('MUHAMMAD', 'annotations/Muhammad'),
+    ('ANNOTATOR_1', 'annotations/annotator_1'),
+    ('ANNOTATOR_2', 'annotations/annotator_2'),
 ]
 
 for name, d in dirs:

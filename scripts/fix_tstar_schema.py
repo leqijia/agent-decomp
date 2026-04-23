@@ -1,7 +1,7 @@
 import json
 import os
 
-for annotator in ['adithya', 'muhammad']:
+for annotator in ['annotator_1', 'annotator_2']:
     d = f'oracle/outputs/tstar/{annotator}'
     if not os.path.exists(d):
         continue

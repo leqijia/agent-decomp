@@ -1,7 +1,7 @@
 """Run Exp 1 full-oracle and env-only-control intervention at each annotated t*.
 
-Reads annotations from annotations/{Adithya,Muhammad}/task_<id>.json and the
-matching t*-step oracle from oracle/outputs/tstar/<who>/<id>_tstar.json. Skips
+Reads annotations from annotations/annotator_<N>/task_<id>.json and the matching
+t*-step oracle from oracle/outputs/tstar/annotator_<N>/<id>_tstar.json. Skips
 tasks where either is missing. Writes results to experiments/oracle_baseline/.
 """
 import json
@@ -26,7 +26,7 @@ def find_trajectory(task_id):
 def load_annotations():
     """{(annotator, task_id): t_star_step}"""
     out = {}
-    for who, dir_who in [("adithya", "annotations/Adithya"), ("muhammad", "annotations/Muhammad")]:
+    for who, dir_who in [("annotator_1", "annotations/annotator_1"), ("annotator_2", "annotations/annotator_2")]:
         if not os.path.isdir(dir_who):
             continue
         for fn in os.listdir(dir_who):

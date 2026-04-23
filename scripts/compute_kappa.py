@@ -4,36 +4,35 @@ import sys
 sys.path.insert(0, '.')
 from harness.metrics import compute_cohens_kappa
 
-adithya_dir = 'annotations/Adithya'
-muhammad_dir = 'annotations/Muhammad'
+ann1_dir = 'annotations/annotator_1'
+ann2_dir = 'annotations/annotator_2'
 
-adithya = {}
-for f in os.listdir(adithya_dir):
-    if f.endswith('.json'):
-        d = json.load(open(os.path.join(adithya_dir, f)))
-        tid = d['trajectory_id']
-        adithya[tid] = d['failure_classification']
 
-muhammad = {}
-for f in os.listdir(muhammad_dir):
-    if f.endswith('.json'):
-        d = json.load(open(os.path.join(muhammad_dir, f)))
-        tid = d['trajectory_id']
-        muhammad[tid] = d['failure_classification']
+def load(dir_path):
+    out = {}
+    for f in os.listdir(dir_path):
+        if f.endswith('.json'):
+            d = json.load(open(os.path.join(dir_path, f)))
+            out[d['trajectory_id']] = d['failure_classification']
+    return out
 
-overlap = sorted(set(adithya.keys()) & set(muhammad.keys()))
-print(f'Adithya annotations: {len(adithya)}')
-print(f'Muhammad annotations: {len(muhammad)}')
+
+a1 = load(ann1_dir)
+a2 = load(ann2_dir)
+
+overlap = sorted(set(a1.keys()) & set(a2.keys()))
+print(f'annotator_1 annotations: {len(a1)}')
+print(f'annotator_2 annotations: {len(a2)}')
 print(f'Overlapping trajectories: {len(overlap)}')
 print(f'Overlap: {overlap}')
 
 if len(overlap) < 2:
     print('Not enough overlap to compute kappa yet.')
 else:
-    labels_a = [adithya[t] for t in overlap]
-    labels_m = [muhammad[t] for t in overlap]
-    kappa = compute_cohens_kappa(labels_a, labels_m)
+    labels1 = [a1[t] for t in overlap]
+    labels2 = [a2[t] for t in overlap]
+    kappa = compute_cohens_kappa(labels1, labels2)
     print(f'Cohen kappa: {kappa}')
     for t in overlap:
-        match = 'AGREE' if adithya[t] == muhammad[t] else 'DISAGREE'
-        print(f'  {t}: Adithya={adithya[t]} Muhammad={muhammad[t]} {match}')
+        match = 'AGREE' if a1[t] == a2[t] else 'DISAGREE'
+        print(f'  {t}: annotator_1={a1[t]} annotator_2={a2[t]} {match}')

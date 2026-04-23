@@ -646,7 +646,7 @@ def build_app() -> gr.Blocks:
             "# Failed Trajectory Annotation Tool\n"
             "1. **t* labeling**: inspect the failed trajectory step by step and mark the first unrecoverable mistake.\n"
             "2. **failure attribution**: review the locked t* step and save a classification.\n"
-            "\nTrajectory labels show peer-completion badges, e.g. `task_308  \u2022  [Muhammad]`, so you can coordinate overlap for inter-annotator agreement."
+            "\nTrajectory labels show peer-completion badges, e.g. `task_308  \u2022  [annotator_2]`, so you can coordinate overlap for inter-annotator agreement."
         )
 
         trajectory_state = gr.State({})
