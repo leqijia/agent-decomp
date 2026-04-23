@@ -468,20 +468,22 @@ def run_episode(
         else:
             result_dict["stop_reason"] = "max_steps"
 
-        if upstream_traj and (
-            not isinstance(upstream_traj[-1], dict)
-            or "action_type" not in upstream_traj[-1]
-        ):
-            upstream_traj.append(create_stop_action(""))
+        # Per SPEC: success/eval_score must be null on crash.
+        if result_dict.get("stop_reason") != "crash":
+            if upstream_traj and (
+                not isinstance(upstream_traj[-1], dict)
+                or "action_type" not in upstream_traj[-1]
+            ):
+                upstream_traj.append(create_stop_action(""))
 
-        try:
-            scorer = evaluator_router(config_file)
-            score = scorer(upstream_traj, config_file, env.page, env.get_page_client(env.page))
-            result_dict["eval_score"] = float(score)
-            result_dict["success"] = score == 1.0
-        except Exception:
-            result_dict["eval_score"] = None
-            result_dict["success"] = None
+            try:
+                scorer = evaluator_router(config_file)
+                score = scorer(upstream_traj, config_file, env.page, env.get_page_client(env.page))
+                result_dict["eval_score"] = float(score)
+                result_dict["success"] = score == 1.0
+            except Exception:
+                result_dict["eval_score"] = None
+                result_dict["success"] = None
 
     except Exception as e:
         result_dict["stop_reason"] = "crash"
@@ -810,20 +812,22 @@ def run_intervention(
         else:
             result_dict["stop_reason"] = "max_steps"
 
-        if upstream_traj and (
-            not isinstance(upstream_traj[-1], dict)
-            or "action_type" not in upstream_traj[-1]
-        ):
-            upstream_traj.append(create_stop_action(""))
+        # Per SPEC: success/eval_score must be null on crash.
+        if result_dict.get("stop_reason") != "crash":
+            if upstream_traj and (
+                not isinstance(upstream_traj[-1], dict)
+                or "action_type" not in upstream_traj[-1]
+            ):
+                upstream_traj.append(create_stop_action(""))
 
-        try:
-            scorer = evaluator_router(config_file)
-            score = scorer(upstream_traj, config_file, env.page, env.get_page_client(env.page))
-            result_dict["eval_score"] = float(score)
-            result_dict["success"] = score == 1.0
-        except Exception:
-            result_dict["eval_score"] = None
-            result_dict["success"] = None
+            try:
+                scorer = evaluator_router(config_file)
+                score = scorer(upstream_traj, config_file, env.page, env.get_page_client(env.page))
+                result_dict["eval_score"] = float(score)
+                result_dict["success"] = score == 1.0
+            except Exception:
+                result_dict["eval_score"] = None
+                result_dict["success"] = None
 
     except Exception as e:
         result_dict["stop_reason"] = "crash"

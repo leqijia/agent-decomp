@@ -374,30 +374,34 @@ def run_episode(cfg: EpisodeConfig, *, out_path: str | Path | None = None) -> Ep
         else:
             result.stop_reason = "max_steps"
 
-        # Scoring requires a trajectory ending in an Action. If we broke out
-        # on max_steps or env_terminated with a StateInfo at the tail, append
-        # a synthetic stop action so the evaluator can read the last state.
-        if upstream_traj and (
-            not isinstance(upstream_traj[-1], dict)
-            or "action_type" not in upstream_traj[-1]
-        ):
-            upstream_traj.append(create_stop_action(""))
+        # Per SPEC: success/eval_score must be null on crash. Skip scoring;
+        # the env may also be in a bad state.
+        if result.stop_reason != "crash":
+            # Scoring requires a trajectory ending in an Action. If we broke
+            # out on max_steps or env_terminated with a StateInfo at the
+            # tail, append a synthetic stop action so the evaluator can read
+            # the last state.
+            if upstream_traj and (
+                not isinstance(upstream_traj[-1], dict)
+                or "action_type" not in upstream_traj[-1]
+            ):
+                upstream_traj.append(create_stop_action(""))
 
-        try:
-            scorer = evaluator_router(cfg.config_file)
-            score = scorer(
-                upstream_traj,
-                cfg.config_file,
-                env.page,
-                env.get_page_client(env.page),
-            )
-            result.eval_score = float(score)
-            result.success = score == 1.0
-        except Exception as e:
-            # Evaluator blew up: persist the run but mark scoring as unknown.
-            result.eval_score = None
-            result.success = None
-            result.steps.append({"evaluator_error": str(e), "traceback": traceback.format_exc()})
+            try:
+                scorer = evaluator_router(cfg.config_file)
+                score = scorer(
+                    upstream_traj,
+                    cfg.config_file,
+                    env.page,
+                    env.get_page_client(env.page),
+                )
+                result.eval_score = float(score)
+                result.success = score == 1.0
+            except Exception as e:
+                # Evaluator blew up: persist the run but mark scoring as unknown.
+                result.eval_score = None
+                result.success = None
+                result.steps.append({"evaluator_error": str(e), "traceback": traceback.format_exc()})
 
     except Exception as e:
         result.stop_reason = "crash"

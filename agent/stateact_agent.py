@@ -389,24 +389,26 @@ def run_stateact_episode(
         else:
             result.stop_reason = "max_steps"
 
-        if upstream_traj and not isinstance(upstream_traj[-1], dict) or (
-            upstream_traj and "action_type" not in upstream_traj[-1]
-        ):
-            upstream_traj.append(create_stop_action(""))
+        # Per SPEC: success/eval_score must be null on crash.
+        if result.stop_reason != "crash":
+            if upstream_traj and not isinstance(upstream_traj[-1], dict) or (
+                upstream_traj and "action_type" not in upstream_traj[-1]
+            ):
+                upstream_traj.append(create_stop_action(""))
 
-        try:
-            scorer = evaluator_router(cfg.config_file)
-            score = scorer(
-                upstream_traj,
-                cfg.config_file,
-                env.page,
-                env.get_page_client(env.page),
-            )
-            result.eval_score = float(score)
-            result.success = score == 1.0
-        except Exception:
-            result.eval_score = None
-            result.success = None
+            try:
+                scorer = evaluator_router(cfg.config_file)
+                score = scorer(
+                    upstream_traj,
+                    cfg.config_file,
+                    env.page,
+                    env.get_page_client(env.page),
+                )
+                result.eval_score = float(score)
+                result.success = score == 1.0
+            except Exception:
+                result.eval_score = None
+                result.success = None
 
     except Exception as e:
         result.stop_reason = "crash"
