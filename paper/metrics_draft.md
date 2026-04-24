@@ -56,13 +56,24 @@ Excluding t*=0 cases: 1.25 steps
 ---
 
 ## Alpha Decomposition
-[TBD — pending Rocky's Experiment 1 results]
+Computed on 17 trajectory-annotator pairs (14-15 valid after 
+filtering replay_desync results).
 
 | Metric | Value | 95% CI |
 |--------|-------|--------|
-| alpha_context | TBD | TBD |
-| alpha_env | TBD | TBD |
-| alpha_capability | TBD | TBD |
+| R_full (oracle recovery rate) | 0.357 | — |
+| R_env (env-only recovery rate) | 0.267 | — |
+| alpha_context | 0.090 | [0.013, 0.315] |
+| alpha_env | 0.267 | [0.109, 0.520] |
+| alpha_capability | 0.643 | [0.388, 0.837] |
+
+Interpretation: Capability limitations dominate (64.3% of failures 
+persist even with perfect oracle context and correct environment). 
+Environment damage accounts for 26.7% of failures — restoring the 
+correct environment state at t* alone recovers more trajectories than 
+providing oracle context. Context quality is the smallest contributor 
+at 9.0%, partially challenging the assumption underlying most context 
+management approaches.
 
 ---
 
