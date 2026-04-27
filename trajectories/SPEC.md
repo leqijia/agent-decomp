@@ -149,6 +149,25 @@ format, replay breaks.
 `usage` field + wall clock. Needed for the "tokens per condition" efficiency
 column in Table 1 of the proposal. Nullable if the provider didn't return usage.
 
+## Condition tags live in the per-experiment manifest, not here
+
+A trajectory file does **not** carry a `condition` field. The same on-disk
+trajectory may be referenced by multiple experimental conditions (e.g. a raw
+ReAct rollout used both as the Experiment 3 raw condition and as the source
+trajectory for an Experiment 1 oracle intervention), and stamping a single
+condition into the file would be ambiguous. Instead, each experiment owns a
+manifest under `experiments/<exp_id>/<condition>/manifest.csv` that maps
+`task_id -> trajectory_path` plus the `condition` and `experiment_id` tags.
+Consumers that need the tag should read it from the manifest, not the
+trajectory JSON. See `experiments/exp3/raw/README.md` for the canonical
+example and `scripts/build_exp3_raw_manifest.py` for how a manifest is
+produced from an existing trajectory directory.
+
+`agent_variant` (above) is the closest in-file attribute to a condition tag,
+but it identifies the agent loop that produced the trajectory (`react` /
+`stateact` / `oracle_external` / `teacher_forcing`), not which experimental
+condition the trajectory plays in for downstream analysis.
+
 ## What's deliberately not stored
 
 Per-step ground-truth DOM. The oracle fetches it live from the WebArena env

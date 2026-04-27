@@ -30,6 +30,7 @@ from baselines.trajectory import (
     sliding_window_truncate,
 )
 from harness.conditions import CONDITION_REGISTRY, VALID_CONDITIONS
+from harness.metrics import LENGTH_BINS, _length_bin
 from llm.config import AGENT_MODEL
 
 load_dotenv()
@@ -43,40 +44,33 @@ def _stub_llm(msg: str) -> str:
     return "### COMPRESSED_CONTEXT\n" + msg[:500]
 
 
-def run_acon_compress(intent: str, steps: list[dict], guideline: str = "") -> dict:
-    result = compress_trajectory(intent, steps, guideline, llm=_stub_llm)
+def run_acon_compress(
+    intent: str,
+    steps: list[dict],
+    guideline: str = "",
+    *,
+    llm=None,
+    model: str = "",
+) -> dict:
+    """Compress a trajectory via the ACON pipeline.
+
+    By default uses the live OpenRouter LLM (`baselines.acon.openrouter_generate`)
+    with `llm.config.ACON_MODEL`. When `OPENROUTER_API_KEY` is unset the call
+    transparently falls back to `_stub_llm`, keeping the offline unit test in
+    `[harness/test_harness.py](harness/test_harness.py)` self-contained
+    (it asserts `result["model"] == "stub"`, which `compress_trajectory`
+    sets when the `llm` argument is a non-openrouter callable).
+
+    Pass `llm=` to override (tests, alternate providers, deterministic stubs).
+    """
+    if llm is None and not os.environ.get("OPENROUTER_API_KEY"):
+        llm = _stub_llm
+    result = compress_trajectory(intent, steps, guideline, llm=llm, model=model)
     return {
         "compressed_text": result.compressed_text,
         "input_tokens": result.input_tokens,
         "model": result.model,
     }
-
-
-# ---------------------------------------------------------------------------
-# Length-bin helper
-# ---------------------------------------------------------------------------
-
-LENGTH_BINS = ["<=10", "11-20", "21-35", "36-50", "51-75", ">75"]
-
-
-def _length_bin(total_steps: int) -> str:
-    """Assign a trajectory to a length bin.
-
-    Bins adjusted from the proposal (<=10, 11-20, 21-40, 41-80) to reflect
-    WebArena's actual moderate horizon (max_steps=75).
-    """
-    if total_steps <= 10:
-        return "<=10"
-    elif total_steps <= 20:
-        return "11-20"
-    elif total_steps <= 35:
-        return "21-35"
-    elif total_steps <= 50:
-        return "36-50"
-    elif total_steps <= 75:
-        return "51-75"
-    else:
-        return ">75"
 
 
 # ---------------------------------------------------------------------------
@@ -155,12 +149,61 @@ def _oracle_external_policy(
     return serialize_trajectory(steps_so_far)
 
 
+def _perfect_retrieval_policy(
+    steps_so_far: list[dict],
+    current_observation: str,
+    intent: str,
+    *,
+    k: int = 3,
+) -> str:
+    """Live-time perfect-retrieval baseline.
+
+    NOTE: this departs from baselines/perfect_retrieval.py's strict-oracle
+    semantics, which use the future logged action at step t as the retrieval
+    query (an upper bound that requires post-hoc replay). At live decision
+    time we do not have a future action, so we query with
+    `intent + current_observation`. The retrieval mechanism (cosine over
+    past-step chunks) is unchanged; only the query construction differs.
+
+    The embedding function is `deterministic_embed_fn` -- a SHA256-seeded
+    pseudo-random projection. It is reproducible and dependency-light but not
+    semantic; swap for `text-embedding-3-small` (or sentence-transformers) for
+    paper-grade retrieval quality. Contract is unchanged: any
+    `Callable[[list[str]], np.ndarray]` works.
+
+    Falls back to `serialize_trajectory(steps_so_far)` when there are fewer
+    than 2 past steps to retrieve from -- nothing meaningful to rank.
+    """
+    if len(steps_so_far) < 2:
+        return serialize_trajectory(steps_so_far)
+
+    import numpy as np
+    from baselines.perfect_retrieval import (
+        _normalize_rows,
+        chunk_text_for_step,
+        deterministic_embed_fn,
+    )
+
+    embed_fn = deterministic_embed_fn()
+    corpus = [chunk_text_for_step(s) for s in steps_so_far]
+    query = f"{intent}\n{current_observation}"
+
+    q_vec = _normalize_rows(embed_fn([query]))[0]
+    c_mat = _normalize_rows(embed_fn(corpus))
+    sims = c_mat @ q_vec
+
+    top_idx = np.argsort(-sims)[: min(k, len(corpus))]
+    selected = sorted((int(i), corpus[int(i)]) for i in top_idx)
+    return "\n\n".join(text for _, text in selected)
+
+
 def _build_context_policy(
     condition: str,
     *,
     window_size: int | None = None,
     oracle_regen_every_k: int | None = None,
     oracle_states: dict[int, str] | None = None,
+    perfect_retrieval_k: int | None = None,
 ):
     """Return a callable context policy for the given condition."""
     _, policy_name = CONDITION_REGISTRY[condition]
@@ -189,7 +232,10 @@ def _build_context_policy(
             )
         return _oe
     elif policy_name == "perfect_retrieval":
-        return _identity_policy
+        pr_k = perfect_retrieval_k if perfect_retrieval_k is not None else 3
+        def _pr(steps, obs, intent):
+            return _perfect_retrieval_policy(steps, obs, intent, k=pr_k)
+        return _pr
     else:
         raise ValueError(f"Unknown policy: {policy_name}")
 
@@ -209,6 +255,7 @@ def run_episode(
     window_size: int | None = None,
     oracle_regen_every_k: int | None = None,
     oracle_states: dict[int, str] | None = None,
+    perfect_retrieval_k: int | None = None,
     out_path: str | None = None,
     thinking: bool = True,
 ) -> dict:
@@ -229,6 +276,7 @@ def run_episode(
         window_size=window_size,
         oracle_regen_every_k=oracle_regen_every_k,
         oracle_states=oracle_states,
+        perfect_retrieval_k=perfect_retrieval_k,
     )
 
     if agent_variant == "stateact":
@@ -941,6 +989,9 @@ def compute_metrics(results: list[dict]) -> dict:
         if total_steps is None:
             continue
         bin_key = _length_bin(total_steps)
+        if bin_key is None:
+            # Trajectory length outside proposal bins (>80 steps) — not aggregated.
+            continue
         bins.setdefault(bin_key, []).append(r)
 
     by_length_bin: dict[str, dict] = {}

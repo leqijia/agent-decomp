@@ -6,11 +6,24 @@ Functions:
     compute_cohens_kappa        -- inter-annotator agreement
     compute_gamma_L             -- context gap by trajectory length bin
     compute_delta_synth         -- self-synthesis degradation gap by length bin
+
+This module is the single source of truth for the proposal-defined length
+bins (Section 2.4): <=10, 11-20, 21-40, 41-80. Trajectories outside that
+range get None from `_length_bin` and are dropped from per-bin aggregates.
 """
 from __future__ import annotations
 
 import math
 from collections import Counter
+
+
+# ---------------------------------------------------------------------------
+# Length-bin constants (single source of truth for the whole repo)
+# ---------------------------------------------------------------------------
+
+LENGTH_BINS: list[str] = ["<=10", "11-20", "21-40", "41-80"]
+
+_LENGTH_BIN_ORDER: dict[str, int] = {b: i for i, b in enumerate(LENGTH_BINS)}
 
 
 # ---------------------------------------------------------------------------
@@ -177,7 +190,7 @@ def compute_gamma_L(oracle_results: list[dict], raw_results: list[dict]) -> dict
     oracle_bins = _bin_results(oracle_results)
     raw_bins    = _bin_results(raw_results)
     all_bins    = sorted(set(oracle_bins) | set(raw_bins),
-                         key=lambda b: {"<=10": 0, "11-20": 1, "21-40": 2, "41-80": 3}[b])
+                         key=lambda b: _LENGTH_BIN_ORDER[b])
 
     out = {}
     for b in all_bins:
@@ -208,7 +221,7 @@ def compute_delta_synth(oracle_results: list[dict], self_gen_results: list[dict]
     oracle_bins   = _bin_results(oracle_results)
     self_gen_bins = _bin_results(self_gen_results)
     all_bins = sorted(set(oracle_bins) | set(self_gen_bins),
-                      key=lambda b: {"<=10": 0, "11-20": 1, "21-40": 2, "41-80": 3}[b])
+                      key=lambda b: _LENGTH_BIN_ORDER[b])
 
     out = {}
     for b in all_bins:

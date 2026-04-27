@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import html
 import json
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
@@ -24,8 +23,6 @@ class AnnotationRecord:
     failure_classification: Optional[str]
     timestamp: str
     notes: str = ""
-    # True: t_star_step is trajectory step t (1..N) matching the JSON "t" field. False/legacy: 0-based list index.
-    t_star_is_trajectory_t: bool = True
 
 
 def ensure_dirs() -> None:
@@ -150,13 +147,12 @@ def get_steps(trajectory: Dict[str, Any]) -> List[Dict[str, Any]]:
     return trajectory.get("steps", [])
 
 
-def get_step_number(step: Dict[str, Any], list_index: int) -> int:
-    """Trajectory step id (WebArena 't' / step_id). Falls back to 1-based list position when missing."""
+def get_step_number(step: Dict[str, Any], fallback_idx: int) -> int:
     if step.get("step_id") is not None:
         return int(step["step_id"])
     if step.get("t") is not None:
         return int(step["t"])
-    return list_index + 1
+    return fallback_idx
 
 
 def build_expected_answer_md(trajectory: Dict[str, Any]) -> str:
@@ -232,26 +228,9 @@ def extract_dom_like_state(step: Dict[str, Any]) -> Tuple[Any, bool]:
     return None, False
 
 
-def _scrollable_text_block(text: Any, max_height_px: int = 260) -> str:
-    """Escaped plain text in a fixed-height scroll region (used inside Markdown with sanitize_html=False)."""
-    body = html.escape(str(text) if text is not None else "")
-    return (
-        f'<pre style="max-height:{max_height_px}px;overflow:auto;font-size:0.82em;line-height:1.3;'
-        f"margin:0.4em 0;white-space:pre-wrap;word-break:break-word;"
-        f'padding:0.45em 0.55em;border-radius:6px;border:1px solid rgba(127,127,127,0.25);'
-        f'background:rgba(127,127,127,0.06);">{body}</pre>'
-    )
-
-
-def format_step_markdown(
-    step: Dict[str, Any],
-    step_idx: int,
-    n_steps: int,
-    t_star_t: Optional[int],
-) -> str:
-    t_val = get_step_number(step, step_idx)
-    marker = t_star_t is not None and t_val == t_star_t
-    star = "\n\n**⭐ Highlighted as t\\***" if marker else ""
+def format_step_markdown(step: Dict[str, Any], step_idx: int, t_star_step: Optional[int], mode: str) -> str:
+    step_num = get_step_number(step, step_idx)
+    marker = "\n\n**⭐ Highlighted as t\\***" if t_star_step == step_idx else ""
 
     url = step.get("url", "")
     action = step.get("action", step.get("agent_action", ""))
@@ -260,53 +239,55 @@ def format_step_markdown(
     raw_prediction = step.get("raw_prediction", "")
     parse_error = step.get("parse_error", None)
 
-    t_star_note = ""
-    if t_star_t is not None:
-        t_star_note = f"\n\n**t\\* (saved):** trajectory step **t = {t_star_t}**"
-
     blocks = [
-        f"## Step t = {t_val}  (step {step_idx + 1} of {n_steps}){star}{t_star_note}",
-        f"**URL:** {html.escape(url or '—')}",
-        "### Agent Action",
-        _scrollable_text_block(action, max_height_px=140),
-        "### Agent Observation",
-        _scrollable_text_block(observation, max_height_px=320),
+        f"## Step {step_idx}  \n**Step Number:** {step_num}{marker}",
+        f"**URL:** {url or '—'}",
     ]
 
+    if mode == "failure attribution" and t_star_step is not None:
+        blocks.append(f"**Review Mode:** failure attribution  \n**Locked t\\* step index:** `{t_star_step}`")
+
+    blocks.extend([
+        "### Agent Action",
+        f"```\n{action}\n```",
+        "### Agent Observation",
+        f"```\n{observation}\n```",
+    ])
+
     if thought:
-        blocks.extend(["### Agent Thought", _scrollable_text_block(thought, max_height_px=200)])
+        blocks.extend(["### Agent Thought", f"```\n{thought}\n```"])
     if raw_prediction:
-        blocks.extend(["### Raw Prediction", _scrollable_text_block(raw_prediction, max_height_px=160)])
+        blocks.extend(["### Raw Prediction", f"```\n{raw_prediction}\n```"])
     if parse_error is not None:
-        blocks.extend(["### Parse Error", _scrollable_text_block(parse_error, max_height_px=120)])
+        blocks.extend(["### Parse Error", f"```\n{parse_error}\n```"])
 
     return "\n\n".join(blocks)
 
 
-def make_status_message(annotator_id: str, trajectory_id: str, t_star_t: Optional[int]) -> str:
+def make_status_message(annotator_id: str, trajectory_id: str, t_star_step: Optional[int], mode: str) -> str:
     completed, total = count_completed_for_annotator(annotator_id)
-    t_star_text = "not selected" if t_star_t is None else f"t = {t_star_t}"
+    t_star_text = "not selected" if t_star_step is None else str(t_star_step)
     return (
         f"Annotator: `{annotator_id or '—'}` | "
         f"Trajectory: `{trajectory_id or '—'}` | "
+        f"Mode: `{mode}` | "
         f"t*: `{t_star_text}` | "
         f"Completed: `{completed}/{total}`"
     )
 
 
 def get_step_bounds(trajectory: Dict[str, Any]) -> Tuple[int, int]:
-    """1-based [min, max] for the step slider (inclusive; matches 1..N in the run)."""
     steps = get_steps(trajectory)
     if not steps:
-        return 1, 1
-    n = len(steps)
-    return 1, n
+        return 0, 0
+    return 0, max(0, len(steps) - 1)
 
 
 def get_step_payload(
     trajectory: Dict[str, Any],
     step_idx: int,
-    t_star_t: Optional[int],
+    t_star_step: Optional[int],
+    mode: str,
     trajectory_id: str,
 ) -> Tuple[str, Any, bool, str, int]:
     steps = get_steps(trajectory)
@@ -315,172 +296,247 @@ def get_step_payload(
     if not steps:
         return "No steps found.", None, False, task_md, 0
 
+    if mode == "failure attribution" and t_star_step is not None:
+        step_idx = t_star_step
+
     step_idx = max(0, min(step_idx, len(steps) - 1))
-    n = len(steps)
     step = steps[step_idx]
-    step_md = format_step_markdown(step, step_idx, n, t_star_t)
+    step_md = format_step_markdown(step, step_idx, t_star_step, mode)
     dom_state, has_dom = extract_dom_like_state(step)
     return step_md, dom_state, has_dom, task_md, step_idx
 
 
-def _decode_t_star_from_annotation(ann: Optional[Dict[str, Any]], trajectory: Dict[str, Any]) -> Optional[int]:
-    """Return t* as the trajectory's step t (1..N), migrating legacy 0-based list index in JSON."""
-    if not ann:
-        return None
-    raw = ann.get("t_star_step")
-    if raw is None:
-        return None
-    steps = get_steps(trajectory)
-    n = len(steps)
-    if n == 0:
-        return None
-    is_traj_t = ann.get("t_star_is_trajectory_t")
-    raw_i = int(raw)
-    if is_traj_t is True:
-        for i, s in enumerate(steps):
-            if get_step_number(s, i) == raw_i:
-                return raw_i
-        if 1 <= raw_i <= n and get_step_number(steps[raw_i - 1], raw_i - 1) == raw_i:
-            return raw_i
-        return None
-    if 0 <= raw_i < n:
-        return get_step_number(steps[raw_i], raw_i)
-    return None
+def compute_effective_mode(requested_mode: str, annotator_id: str, t_star_step: Optional[int]) -> Tuple[str, str]:
+    annotator_ok = bool(annotator_id.strip())
+    has_t_star = t_star_step is not None
+    can_enter_failure = annotator_ok and has_t_star
+
+    if requested_mode == "failure attribution" and not can_enter_failure:
+        if not annotator_ok and not has_t_star:
+            return "t* labeling", "Enter Annotator ID and mark t* before switching to failure attribution."
+        if not annotator_ok:
+            return "t* labeling", "Enter Annotator ID before switching to failure attribution."
+        return "t* labeling", "Mark t* before switching to failure attribution."
+
+    if requested_mode == "failure attribution":
+        return "failure attribution", f"**Failure attribution mode:** reviewing locked t* step `{t_star_step}`."
+
+    if not annotator_ok and not has_t_star:
+        return "t* labeling", "Enter Annotator ID and mark t* to unlock failure attribution."
+    if not annotator_ok:
+        return "t* labeling", "Enter Annotator ID to unlock failure attribution."
+    if not has_t_star:
+        return "t* labeling", "Mark t* to unlock failure attribution."
+    return "t* labeling", "Failure attribution is unlocked."
+
+
+def build_mode_update(effective_mode: str, annotator_id: str, t_star_step: Optional[int]):
+    annotator_ok = bool(annotator_id.strip())
+    has_t_star = t_star_step is not None
+    choices = ["t* labeling"]
+    if annotator_ok and has_t_star:
+        choices.append("failure attribution")
+    return gr.update(choices=choices, value=effective_mode)
 
 
 def build_full_view(
     annotator_id: str,
     trajectory_id: str,
-    t_star_t: Optional[int],
+    requested_mode: str,
+    t_star_step: Optional[int],
     current_step_idx: int,
     failure_classification: Optional[str],
     notes: str,
     save_status_text: str = "",
 ):
-    failure_update = gr.update(value=failure_classification, interactive=True)
-    notes_update = gr.update(value=notes, interactive=True)
-    save_btn_update = gr.update(interactive=True)
+    effective_mode, helper_text = compute_effective_mode(requested_mode, annotator_id, t_star_step)
+    mode_update = build_mode_update(effective_mode, annotator_id, t_star_step)
+
+    t_mode = effective_mode == "t* labeling"
+    a_mode = effective_mode == "failure attribution"
+
+    mark_btn_update = gr.update(visible=t_mode)
+    prev_update = gr.update(interactive=t_mode)
+    next_update = gr.update(interactive=t_mode)
+    failure_update = gr.update(value=failure_classification, interactive=a_mode)
+    notes_update = gr.update(value=notes, interactive=a_mode)
+    save_btn_update = gr.update(interactive=a_mode)
+    mode_warning_update = gr.update(value=helper_text, visible=bool(helper_text))
 
     if not trajectory_id:
-        empty_status = make_status_message(annotator_id, "", t_star_t)
+        empty_status = make_status_message(annotator_id, "", t_star_step, effective_mode)
         return (
+            mode_update,
             {},
             0,
-            t_star_t,
+            t_star_step,
             empty_status,
             "No trajectory selected.",
             gr.update(value=None, visible=False),
             "## Task Description\n",
-            gr.update(minimum=1, maximum=1, value=1, interactive=True),
+            gr.update(minimum=0, maximum=0, value=0, interactive=t_mode),
             failure_update,
             notes_update,
+            mark_btn_update,
+            prev_update,
+            next_update,
+            mode_warning_update,
             save_btn_update,
             save_status_text,
         )
 
     trajectory = load_trajectory(trajectory_id)
+    display_step = t_star_step if a_mode and t_star_step is not None else current_step_idx
     step_md, dom_state, has_dom, task_md, resolved_step_idx = get_step_payload(
-        trajectory, current_step_idx, t_star_t, trajectory_id
+        trajectory, display_step, t_star_step, effective_mode, trajectory_id
     )
     min_step, max_step = get_step_bounds(trajectory)
-    status_md = make_status_message(annotator_id, trajectory_id, t_star_t)
+    status_md = make_status_message(annotator_id, trajectory_id, t_star_step, effective_mode)
 
     return (
+        mode_update,
         trajectory,
         resolved_step_idx,
-        t_star_t,
+        t_star_step,
         status_md,
         step_md,
         gr.update(value=dom_state, visible=has_dom),
         task_md,
-        gr.update(
-            minimum=min_step,
-            maximum=max_step,
-            value=resolved_step_idx + 1,
-            interactive=True,
-        ),
+        gr.update(minimum=min_step, maximum=max_step, value=resolved_step_idx, interactive=t_mode),
         failure_update,
         notes_update,
+        mark_btn_update,
+        prev_update,
+        next_update,
+        mode_warning_update,
         save_btn_update,
         save_status_text,
     )
 
 
-def init_app(annotator_id: str, trajectory_id: str):
+def init_app(annotator_id: str, trajectory_id: str, mode: str):
     existing = load_annotation(annotator_id, trajectory_id)
-    t_star_t: Optional[int] = None
-    if existing and trajectory_id:
-        try:
-            traj = load_trajectory(trajectory_id)
-            t_star_t = _decode_t_star_from_annotation(existing, traj)
-        except (FileNotFoundError, OSError, json.JSONDecodeError):
-            t_star_t = None
+    t_star_step = existing.get("t_star_step") if existing else None
     failure_classification = existing.get("failure_classification") if existing else None
     notes = existing.get("notes", "") if existing else ""
-    initial_step = 0
+    initial_step = t_star_step if (mode == "failure attribution" and t_star_step is not None) else 0
     return build_full_view(
         annotator_id=annotator_id,
         trajectory_id=trajectory_id,
-        t_star_t=t_star_t,
+        requested_mode=mode,
+        t_star_step=t_star_step,
         current_step_idx=initial_step,
         failure_classification=failure_classification,
         notes=notes,
     )
 
 
-def on_context_change(annotator_id: str, trajectory_id: str):
-    return init_app(annotator_id, trajectory_id)
+def on_context_change(annotator_id: str, trajectory_id: str, mode: str):
+    return init_app(annotator_id, trajectory_id, mode)
+
+
+def on_mode_change(
+    annotator_id: str,
+    trajectory_id: str,
+    requested_mode: str,
+    t_star_step: Optional[int],
+    current_step_idx: int,
+    failure_classification: Optional[str],
+    notes: str,
+    save_status: str,
+):
+    return build_full_view(
+        annotator_id=annotator_id,
+        trajectory_id=trajectory_id,
+        requested_mode=requested_mode,
+        t_star_step=t_star_step,
+        current_step_idx=current_step_idx,
+        failure_classification=failure_classification,
+        notes=notes,
+        save_status_text=save_status,
+    )
+
+
+def on_mode_change_view_only(
+    annotator_id: str,
+    trajectory_id: str,
+    requested_mode: str,
+    t_star_step: Optional[int],
+    current_step_idx: int,
+    failure_classification: Optional[str],
+    notes: str,
+    save_status: str,
+):
+    full = on_mode_change(
+        annotator_id=annotator_id,
+        trajectory_id=trajectory_id,
+        requested_mode=requested_mode,
+        t_star_step=t_star_step,
+        current_step_idx=current_step_idx,
+        failure_classification=failure_classification,
+        notes=notes,
+        save_status=save_status,
+    )
+    return full[1:]
 
 
 def on_step_change(
     trajectory: Dict[str, Any],
-    step_slider_1: float,
-    t_star_t: Optional[int],
+    step_idx: int,
+    t_star_step: Optional[int],
     annotator_id: str,
     trajectory_id: str,
+    mode: str,
 ):
-    steps = get_steps(trajectory)
-    n = len(steps)
-    if n == 0:
-        return 0, "No steps.", "No steps found.", gr.update(value=None, visible=False), build_task_description(trajectory, trajectory_id)
-    u = int(round(float(step_slider_1)))
-    step_idx = max(0, min(n - 1, u - 1))
+    effective_mode, _ = compute_effective_mode(mode, annotator_id, t_star_step)
     step_md, dom_state, has_dom, task_md, resolved_step_idx = get_step_payload(
-        trajectory, step_idx, t_star_t, trajectory_id
+        trajectory, step_idx, t_star_step, effective_mode, trajectory_id
     )
-    status_md = make_status_message(annotator_id, trajectory_id, t_star_t)
+    status_md = make_status_message(annotator_id, trajectory_id, t_star_step, effective_mode)
     return resolved_step_idx, status_md, step_md, gr.update(value=dom_state, visible=has_dom), task_md
 
 
 def prev_step(
     trajectory: Dict[str, Any],
     step_idx: int,
-    t_star_t: Optional[int],
+    t_star_step: Optional[int],
     annotator_id: str,
     trajectory_id: str,
+    mode: str,
 ):
-    new_idx = max(0, step_idx - 1)
+    effective_mode, _ = compute_effective_mode(mode, annotator_id, t_star_step)
+    if effective_mode == "failure attribution" and t_star_step is not None:
+        new_idx = t_star_step
+    else:
+        new_idx = max(0, step_idx - 1)
+
     step_md, dom_state, has_dom, task_md, resolved_step_idx = get_step_payload(
-        trajectory, new_idx, t_star_t, trajectory_id
+        trajectory, new_idx, t_star_step, effective_mode, trajectory_id
     )
-    status_md = make_status_message(annotator_id, trajectory_id, t_star_t)
+    status_md = make_status_message(annotator_id, trajectory_id, t_star_step, effective_mode)
     return resolved_step_idx, status_md, step_md, gr.update(value=dom_state, visible=has_dom), task_md
 
 
 def next_step(
     trajectory: Dict[str, Any],
     step_idx: int,
-    t_star_t: Optional[int],
+    t_star_step: Optional[int],
     annotator_id: str,
     trajectory_id: str,
+    mode: str,
 ):
-    steps = get_steps(trajectory)
-    max_idx = max(0, len(steps) - 1)
-    new_idx = min(max_idx, step_idx + 1)
+    effective_mode, _ = compute_effective_mode(mode, annotator_id, t_star_step)
+    if effective_mode == "failure attribution" and t_star_step is not None:
+        new_idx = t_star_step
+    else:
+        steps = get_steps(trajectory)
+        max_idx = max(0, len(steps) - 1)
+        new_idx = min(max_idx, step_idx + 1)
+
     step_md, dom_state, has_dom, task_md, resolved_step_idx = get_step_payload(
-        trajectory, new_idx, t_star_t, trajectory_id
+        trajectory, new_idx, t_star_step, effective_mode, trajectory_id
     )
-    status_md = make_status_message(annotator_id, trajectory_id, t_star_t)
+    status_md = make_status_message(annotator_id, trajectory_id, t_star_step, effective_mode)
     return resolved_step_idx, status_md, step_md, gr.update(value=dom_state, visible=has_dom), task_md
 
 
@@ -489,23 +545,24 @@ def mark_t_star(
     step_idx: int,
     annotator_id: str,
     trajectory_id: str,
+    mode: str,
 ):
+    effective_mode, _ = compute_effective_mode(mode, annotator_id, None)
+    if effective_mode != "t* labeling":
+        return None, "Switch to t* labeling mode to choose the first unrecoverable mistake."
     if not trajectory_id:
         return None, "Please select a trajectory first."
-    steps = get_steps(trajectory)
-    if not steps or not (0 <= step_idx < len(steps)):
-        return None, "No valid step to mark."
-    t_val = get_step_number(steps[step_idx], step_idx)
-    status_md = make_status_message(annotator_id, trajectory_id, t_val)
-    return t_val, f"Saved in memory: t* = trajectory step t = {t_val}. {status_md}"
+    status_md = make_status_message(annotator_id, trajectory_id, step_idx, "t* labeling")
+    return step_idx, f"Saved in memory: t* set to step {step_idx}. {status_md}"
 
 
 def after_mark_t_star(
     trajectory: Dict[str, Any],
     current_step_idx: int,
-    t_star_t: Optional[int],
+    t_star_step: Optional[int],
     annotator_id: str,
     trajectory_id: str,
+    mode: str,
     failure_classification: Optional[str],
     notes: str,
     save_status: str,
@@ -513,7 +570,8 @@ def after_mark_t_star(
     return build_full_view(
         annotator_id=annotator_id,
         trajectory_id=trajectory_id,
-        t_star_t=t_star_t,
+        requested_mode=mode,
+        t_star_step=t_star_step,
         current_step_idx=current_step_idx,
         failure_classification=failure_classification,
         notes=notes,
@@ -524,27 +582,30 @@ def after_mark_t_star(
 def save_current_annotation(
     annotator_id: str,
     trajectory_id: str,
-    t_star_t: Optional[int],
+    t_star_step: Optional[int],
     failure_classification: Optional[str],
     notes: str,
+    mode: str,
 ):
+    effective_mode, _ = compute_effective_mode(mode, annotator_id, t_star_step)
+    if effective_mode != "failure attribution":
+        return "Saving is only allowed in failure attribution mode."
     if not annotator_id.strip():
         return "Please enter an annotator ID before saving."
     if not trajectory_id:
         return "Please select a trajectory before saving."
-    if t_star_t is None:
-        return "Please mark the t* step before saving."
+    if t_star_step is None:
+        return "Please mark the t* step before entering failure attribution mode."
     if not failure_classification:
         return "Please choose either 'context-caused' or 'capability-caused' before saving."
 
     record = AnnotationRecord(
         annotator_id=annotator_id.strip(),
         trajectory_id=trajectory_id,
-        t_star_step=int(t_star_t),
+        t_star_step=int(t_star_step),
         failure_classification=failure_classification,
         notes=notes or "",
         timestamp=datetime.now(timezone.utc).isoformat(),
-        t_star_is_trajectory_t=True,
     )
     out_path = save_annotation(record)
     completed, total = count_completed_for_annotator(annotator_id)
@@ -554,16 +615,18 @@ def save_current_annotation(
 def save_current_annotation_and_refresh(
     annotator_id: str,
     trajectory_id: str,
-    t_star_t: Optional[int],
+    t_star_step: Optional[int],
     failure_classification: Optional[str],
     notes: str,
+    mode: str,
 ):
     message = save_current_annotation(
         annotator_id=annotator_id,
         trajectory_id=trajectory_id,
-        t_star_t=t_star_t,
+        t_star_step=t_star_step,
         failure_classification=failure_classification,
         notes=notes,
+        mode=mode,
     )
     dropdown_update = gr.update(choices=build_dropdown_choices(), value=trajectory_id)
     return message, dropdown_update
@@ -581,7 +644,8 @@ def build_app() -> gr.Blocks:
     with gr.Blocks(title="Failed Trajectory Annotation Tool") as demo:
         gr.Markdown(
             "# Failed Trajectory Annotation Tool\n"
-            "Step through the trajectory, mark **t\\***, choose failure attribution, add optional notes, then **Save**.\n"
+            "1. **t* labeling**: inspect the failed trajectory step by step and mark the first unrecoverable mistake.\n"
+            "2. **failure attribution**: review the locked t* step and save a classification.\n"
             "\nTrajectory labels show peer-completion badges, e.g. `task_308  \u2022  [annotator_2]`, so you can coordinate overlap for inter-annotator agreement."
         )
 
@@ -598,35 +662,27 @@ def build_app() -> gr.Blocks:
                 interactive=True,
             )
             refresh_btn = gr.Button("Refresh peer status", scale=0)
+            mode = gr.Radio(
+                label="Annotation Mode",
+                choices=["t* labeling"],
+                value="t* labeling",
+                interactive=True,
+            )
 
         status_md = gr.Markdown("Select a trajectory to begin.")
+        mode_warning = gr.Markdown(visible=False)
 
         with gr.Row():
             with gr.Column(scale=3):
-                task_md = gr.Markdown(
-                    "## Task Description",
-                    max_height=340,
-                    container=True,
-                )
-                step_md = gr.Markdown(
-                    "No trajectory loaded.",
-                    sanitize_html=False,
-                    max_height=560,
-                    container=True,
-                )
+                task_md = gr.Markdown("## Task Description")
+                step_md = gr.Markdown("No trajectory loaded.")
             with gr.Column(scale=2):
-                dom_json = gr.JSON(label="Ground-Truth DOM State", visible=False, max_height=420)
+                dom_json = gr.JSON(label="Ground-Truth DOM State", visible=False)
 
         with gr.Row():
             prev_btn = gr.Button("Previous Step")
             next_btn = gr.Button("Next Step")
-            step_slider = gr.Slider(
-                label="Step (1 to N, matches trajectory t where present)",
-                minimum=1,
-                maximum=1,
-                step=1,
-                value=1,
-            )
+            step_slider = gr.Slider(label="Step", minimum=0, maximum=0, step=1, value=0)
             mark_btn = gr.Button("Mark Current Step as t*")
 
         with gr.Column():
@@ -635,14 +691,15 @@ def build_app() -> gr.Blocks:
                 label="Failure Attribution",
                 choices=["context-caused", "capability-caused"],
                 value=None,
-                interactive=True,
+                interactive=False,
             )
-            notes = gr.Textbox(label="Optional Notes", lines=4, interactive=True)
-            save_btn = gr.Button("Save Annotation", variant="primary", interactive=True)
+            notes = gr.Textbox(label="Optional Notes", lines=4, interactive=False)
+            save_btn = gr.Button("Save Annotation", variant="primary", interactive=False)
 
         save_status = gr.Markdown("")
 
         context_outputs = [
+            mode,
             trajectory_state,
             current_step_state,
             t_star_state,
@@ -653,91 +710,85 @@ def build_app() -> gr.Blocks:
             step_slider,
             failure_classification,
             notes,
+            mark_btn,
+            prev_btn,
+            next_btn,
+            mode_warning,
             save_btn,
             save_status,
         ]
-
-        _scroll_kw = dict(scroll_to_output=False, show_progress="minimal")
+        mode_switch_outputs = context_outputs[1:]
 
         demo.load(
             fn=on_context_change,
-            inputs=[annotator_id, trajectory_id],
+            inputs=[annotator_id, trajectory_id, mode],
             outputs=context_outputs,
-            **_scroll_kw,
         )
 
         trajectory_id.change(
             fn=on_context_change,
-            inputs=[annotator_id, trajectory_id],
+            inputs=[annotator_id, trajectory_id, mode],
             outputs=context_outputs,
-            **_scroll_kw,
         )
 
         annotator_id.change(
             fn=on_context_change,
-            inputs=[annotator_id, trajectory_id],
+            inputs=[annotator_id, trajectory_id, mode],
             outputs=context_outputs,
-            **_scroll_kw,
+        )
+
+        mode.change(
+            fn=on_mode_change_view_only,
+            inputs=[annotator_id, trajectory_id, mode, t_star_state, current_step_state, failure_classification, notes, save_status],
+            outputs=mode_switch_outputs,
         )
 
         step_slider.change(
             fn=on_step_change,
-            inputs=[trajectory_state, step_slider, t_star_state, annotator_id, trajectory_id],
+            inputs=[trajectory_state, step_slider, t_star_state, annotator_id, trajectory_id, mode],
             outputs=[current_step_state, status_md, step_md, dom_json, task_md],
-            **_scroll_kw,
         )
 
         prev_btn.click(
             fn=prev_step,
-            inputs=[trajectory_state, current_step_state, t_star_state, annotator_id, trajectory_id],
+            inputs=[trajectory_state, current_step_state, t_star_state, annotator_id, trajectory_id, mode],
             outputs=[current_step_state, status_md, step_md, dom_json, task_md],
-            **_scroll_kw,
         ).then(
-            fn=lambda i: i + 1,
+            fn=lambda x: x,
             inputs=[current_step_state],
             outputs=[step_slider],
-            scroll_to_output=False,
-            show_progress="hidden",
         )
 
         next_btn.click(
             fn=next_step,
-            inputs=[trajectory_state, current_step_state, t_star_state, annotator_id, trajectory_id],
+            inputs=[trajectory_state, current_step_state, t_star_state, annotator_id, trajectory_id, mode],
             outputs=[current_step_state, status_md, step_md, dom_json, task_md],
-            **_scroll_kw,
         ).then(
-            fn=lambda i: i + 1,
+            fn=lambda x: x,
             inputs=[current_step_state],
             outputs=[step_slider],
-            scroll_to_output=False,
-            show_progress="hidden",
         )
 
         mark_btn.click(
             fn=mark_t_star,
-            inputs=[trajectory_state, current_step_state, annotator_id, trajectory_id],
+            inputs=[trajectory_state, current_step_state, annotator_id, trajectory_id, mode],
             outputs=[t_star_state, save_status],
-            **_scroll_kw,
         ).then(
             fn=after_mark_t_star,
-            inputs=[trajectory_state, current_step_state, t_star_state, annotator_id, trajectory_id, failure_classification, notes, save_status],
+            inputs=[trajectory_state, current_step_state, t_star_state, annotator_id, trajectory_id, mode, failure_classification, notes, save_status],
             outputs=context_outputs,
-            **_scroll_kw,
         )
 
         save_btn.click(
             fn=save_current_annotation_and_refresh,
-            inputs=[annotator_id, trajectory_id, t_star_state, failure_classification, notes],
+            inputs=[annotator_id, trajectory_id, t_star_state, failure_classification, notes, mode],
             outputs=[save_status, trajectory_id],
-            **_scroll_kw,
         )
 
         refresh_btn.click(
             fn=refresh_dropdown_choices,
             inputs=[trajectory_id],
             outputs=[trajectory_id],
-            scroll_to_output=False,
-            show_progress="minimal",
         )
 
     return demo
