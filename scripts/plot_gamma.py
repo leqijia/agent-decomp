@@ -10,8 +10,8 @@ import json
 import os
 import sys
 
-BIN_ORDER = ["0-10", "11-20", "21-40", "41-80"]
-BIN_LABELS = ["≤10", "11-20", "21-40", "41-80"]  # ≤10, 11-20, 21-40, 41-80
+BIN_ORDER = ["<=10", "11-20", "21-40", "41-80"]
+BIN_LABELS = {"<=10": "≤10", "11-20": "11–20", "21-40": "21–40", "41-80": "41–80"}
 
 
 def _get(d, *keys, default=None):
@@ -22,10 +22,10 @@ def _get(d, *keys, default=None):
 
 
 def parse_bin(d):
-    acc_oracle = _get(d, "acc_oracle", "oracle_acc")
-    acc_raw    = _get(d, "acc_raw",    "raw_acc")
+    acc_oracle = _get(d, "oracle_acc", "acc_oracle")
+    acc_raw    = _get(d, "raw_acc",    "acc_raw")
     gamma      = _get(d, "gamma")
-    n = _get(d, "n") or (
+    n          = _get(d, "count", "n") or (
         max(_get(d, "oracle_n", default=0), _get(d, "raw_n", default=0)) or None
     )
     return acc_oracle, acc_raw, gamma, n
@@ -55,7 +55,7 @@ def main():
         print(f"  WARNING: unexpected bin keys {extra} — rendering canonical bins only")
 
     present_bins   = [b for b in BIN_ORDER if b in data]
-    present_labels = [BIN_LABELS[BIN_ORDER.index(b)] for b in present_bins]
+    present_labels = [BIN_LABELS[b] for b in present_bins]
     missing = [b for b in BIN_ORDER if b not in data]
     if missing:
         print(f"  WARNING: missing bin keys {missing} — those bins will be absent")
