@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
+from oracle.generate_oracle import build_prompt, call_oracle, get_live_dom, save_output
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -130,6 +131,8 @@ def _oracle_external_policy(
     *,
     oracle_states: dict[int, str] | None = None,
     regen_every_k: int = 3,
+    current_url: str | None = None,
+    task_id: int | str | None = None,
 ) -> str:
     """Inject pre-computed oracle state every k steps.
 
@@ -139,10 +142,25 @@ def _oracle_external_policy(
     if oracle_states is None:
         return serialize_trajectory(steps_so_far)
     current_t = len(steps_so_far)
+
+    if current_t % regen_every_k == 0:
+        live_dom = get_live_dom(current_url)
+        prompt_version = "v3"
+        prompt = build_prompt(intent, steps_so_far, live_dom, current_t, version=prompt_version)
+        result = call_oracle(prompt, use_stub=False)
+        save_output(
+            trajectory_id=str(task_id) if task_id is not None else "unknown",
+            step=current_t,
+            prompt_version=prompt_version,
+            response_dict=result,
+            output_dir=os.path.join(os.path.dirname(__file__), "tmp_oracle_outputs"),
+        )
+        oracle_states[current_t] = result["content"]
+
     latest_oracle_t = None
     for t in sorted(oracle_states.keys(), reverse=True):
         if t <= current_t:
-            latest_oracle_t = t
+            latest_oracle_t = t 
             break
     if latest_oracle_t is not None:
         return oracle_states[latest_oracle_t]
@@ -225,10 +243,13 @@ def _build_context_policy(
         return _env_only_policy
     elif policy_name == "oracle_external":
         k = oracle_regen_every_k or 3
-        def _oe(steps, obs, intent):
+        def _oe(steps, obs, intent, *, current_url=None, task_id = None):
             return _oracle_external_policy(
                 steps, obs, intent,
-                oracle_states=oracle_states, regen_every_k=k,
+                oracle_states=oracle_states,
+                regen_every_k=k,
+                current_url=current_url,
+                task_id=task_id,
             )
         return _oe
     elif policy_name == "perfect_retrieval":
@@ -389,7 +410,16 @@ def run_episode(
             obs_text = obs.get("text", "")
             obs_truncated = truncate_observation(obs_text, max_obs_length)
 
-            ctx = context_policy(steps_so_far, obs_truncated, intent)
+            if policy_name == "oracle_external":
+                ctx = context_policy(
+                    steps_so_far,
+                    obs_truncated,
+                    intent,
+                    current_url=step_url,
+                    task_id=task_id
+                )
+            else:
+                ctx = context_policy(steps_so_far, obs_truncated, intent)
             if ctx:
                 augmented_obs = f"CONTEXT:\n{ctx}\n\nCURRENT OBSERVATION:\n{obs_truncated}"
             else:
