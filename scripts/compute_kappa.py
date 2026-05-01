@@ -1,40 +1,47 @@
 """Three-tier inter-annotator agreement.
 
-Tier 1 — Fleiss's kappa across all 4 annotators on the shared 20 trajectories.
-Tier 2 — Cohen's kappa for Adithya (ann1) vs Muhammad (ann2) on their 40.
-Tier 3 — Cohen's kappa for Marlin  (ann3) vs Rocky   (ann4) on their 40.
+Reports:
+  failure_classification — Cohen's kappa, Gwet's AC1, raw agreement
+  t_star_step             — exact match, within-1, within-3, mean abs diff
+
+Tiers:
+  Tier 1 — Fleiss's kappa across all 4 annotators on the shared 20.
+  Tier 2 — Cohen + AC1 for Adithya (a1) vs Muhammad (a2) on their 40.
+  Tier 3 — Cohen + AC1 for Marlin  (a3) vs Rocky    (a4) on their 40.
+
+Writes a JSON summary to experiments/kappa_results.json so paper tables
+read from a single file instead of scraping stdout.
 """
 import json
 import os
 import sys
+from collections import Counter
+
 sys.path.insert(0, '.')
 from harness.metrics import compute_cohens_kappa
 
 # ---------------------------------------------------------------------------
-# Trajectory ID sets — fill in actual IDs as annotation batches land
+# Annotation overlap structure (matches the actual handouts)
 # ---------------------------------------------------------------------------
 
-# All 4 annotators annotated these — Fleiss's kappa only
 SHARED_20 = [28, 49, 102, 103, 104, 159, 171, 178, 181, 241,
              12, 13, 27, 62, 114, 142, 162, 169, 239, 273]
 
-# Adithya + Muhammad only — Cohen's kappa only (do NOT include SHARED_20)
 ADITHYA_MUHAMMAD_40 = [270, 277, 285, 309, 312, 351, 352, 375, 390, 393,
                        399, 411, 412, 432, 434, 442, 446, 451, 454, 460,
                        471, 473, 484, 486, 489, 494, 496, 502, 522, 528,
                        575, 594, 615, 653, 654, 655, 672, 675, 682, 688]
 
-# Marlin + Rocky only — Cohen's kappa only (do NOT include SHARED_20)
 MARLIN_ROCKY_40 = [280, 311, 317, 324, 328, 354, 388, 391, 400, 413,
                    420, 422, 433, 437, 441, 443, 444, 447, 458, 461,
                    472, 481, 482, 483, 487, 488, 492, 507, 508, 509,
                    530, 532, 534, 573, 602, 608, 656, 660, 667, 681]
 
 ANNOTATOR_DIRS = {
-    'annotator_1': 'annotations/annotator_1',  # Adithya
-    'annotator_2': 'annotations/annotator_2',  # Muhammad
-    'annotator_3': 'annotations/annotator_3',  # Marlin
-    'annotator_4': 'annotations/annotator_4',  # Rocky
+    'annotator_1': 'annotations/annotator_1',
+    'annotator_2': 'annotations/annotator_2',
+    'annotator_3': 'annotations/annotator_3',
+    'annotator_4': 'annotations/annotator_4',
 }
 
 ANNOTATOR_NAMES = {
@@ -44,149 +51,204 @@ ANNOTATOR_NAMES = {
     'annotator_4': 'Rocky',
 }
 
+OUT_PATH = 'experiments/kappa_results.json'
+
 
 # ---------------------------------------------------------------------------
 # Loaders
 # ---------------------------------------------------------------------------
 
 def load(dir_path):
-    """Return {trajectory_id_str: failure_classification} for all JSON in dir."""
+    """Return {trajectory_id_str: {'class': str|None, 't_star': int|None}}."""
     out = {}
     if not os.path.isdir(dir_path):
         return out
     for f in os.listdir(dir_path):
         if not f.endswith('.json'):
             continue
-        d = json.load(open(os.path.join(dir_path, f)))
+        try:
+            d = json.load(open(os.path.join(dir_path, f)))
+        except json.JSONDecodeError:
+            continue
         tid = str(d['trajectory_id']).replace('task_', '')
-        out[tid] = d['failure_classification']
+        out[tid] = {
+            'class': d.get('failure_classification'),
+            't_star': d.get('t_star_step'),
+        }
     return out
 
-
-# ---------------------------------------------------------------------------
-# Fleiss's kappa (no scipy)
-# ---------------------------------------------------------------------------
-
-def fleiss_kappa(matrix):
-    """
-    Fleiss's kappa for N subjects, each rated by the same number of raters.
-
-    matrix: list of dicts {category: count}, one per subject.
-    All rows must sum to the same n (number of raters).
-    """
-    if not matrix:
-        return 0.0
-
-    N = len(matrix)
-    n = sum(matrix[0].values())
-    if n <= 1:
-        return 0.0
-
-    categories = sorted(set(c for row in matrix for c in row))
-    if len(categories) <= 1:
-        return 1.0
-
-    total = N * n
-    p_j = {c: sum(row.get(c, 0) for row in matrix) / total for c in categories}
-    P_e = sum(pj ** 2 for pj in p_j.values())
-
-    P_bar = sum(
-        sum(count * (count - 1) for count in row.values())
-        for row in matrix
-    ) / (N * n * (n - 1))
-
-    if P_e >= 1.0:
-        return 1.0
-
-    return round((P_bar - P_e) / (1.0 - P_e), 4)
-
-
-# ---------------------------------------------------------------------------
-# Reporting helpers
-# ---------------------------------------------------------------------------
 
 def _normalise_ids(id_list):
     return set(str(t).replace('task_', '') for t in id_list)
 
 
-def report_fleiss(all_anns, task_ids):
-    print('=== Fleiss kappa — all 4 annotators, shared 20 ===')
+# ---------------------------------------------------------------------------
+# Agreement metrics
+# ---------------------------------------------------------------------------
+
+def gwets_ac1(labels_a, labels_b):
+    """Gwet's AC1 — robust to class-prevalence skew, unlike Cohen's kappa.
+
+    For 2-category labels with C categories Q (the chance-agreement term):
+        AC1 = (p_o - p_e) / (1 - p_e)
+        p_e = 2 * pi * (1 - pi) / (C - 1) * ... -- general form below.
+    """
+    if len(labels_a) != len(labels_b) or len(labels_a) == 0:
+        return None
+    n = len(labels_a)
+    cats = sorted(set(labels_a) | set(labels_b))
+    C = len(cats)
+    if C <= 1:
+        return 1.0
+    p_o = sum(a == b for a, b in zip(labels_a, labels_b)) / n
+    # marginal proportion per category, averaged across raters
+    pi = {}
+    for c in cats:
+        pa = sum(1 for x in labels_a if x == c) / n
+        pb = sum(1 for x in labels_b if x == c) / n
+        pi[c] = (pa + pb) / 2.0
+    p_e = sum(pi[c] * (1.0 - pi[c]) for c in cats) / (C - 1)
+    if p_e >= 1.0:
+        return 1.0
+    return round((p_o - p_e) / (1.0 - p_e), 4)
+
+
+def fleiss_kappa(matrix):
+    if not matrix:
+        return 0.0
+    N = len(matrix)
+    n = sum(matrix[0].values())
+    if n <= 1:
+        return 0.0
+    categories = sorted(set(c for row in matrix for c in row))
+    if len(categories) <= 1:
+        return 1.0
+    total = N * n
+    p_j = {c: sum(row.get(c, 0) for row in matrix) / total for c in categories}
+    P_e = sum(pj ** 2 for pj in p_j.values())
+    P_bar = sum(
+        sum(count * (count - 1) for count in row.values())
+        for row in matrix
+    ) / (N * n * (n - 1))
+    if P_e >= 1.0:
+        return 1.0
+    return round((P_bar - P_e) / (1.0 - P_e), 4)
+
+
+def t_star_stats(pairs):
+    """pairs: list of (t_a, t_b) ignoring None entries."""
+    valid = [(a, b) for a, b in pairs if a is not None and b is not None]
+    if not valid:
+        return None
+    diffs = [abs(a - b) for a, b in valid]
+    n = len(diffs)
+    return {
+        'n': n,
+        'mean_abs_diff': round(sum(diffs) / n, 3),
+        'median_abs_diff': sorted(diffs)[n // 2],
+        'exact_match_rate': round(sum(1 for d in diffs if d == 0) / n, 3),
+        'within_1_rate':   round(sum(1 for d in diffs if d <= 1) / n, 3),
+        'within_3_rate':   round(sum(1 for d in diffs if d <= 3) / n, 3),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Reports
+# ---------------------------------------------------------------------------
+
+def report_pair(name_a, ann_a, name_b, ann_b, task_ids, log):
     target = _normalise_ids(task_ids)
-    ann_keys = list(all_anns.keys())
+    both = sorted(target & set(ann_a.keys()) & set(ann_b.keys()))
 
-    rows_full = []
-    per_task = []
-    for t in sorted(target):
-        ratings = {k: all_anns[k][t] for k in ann_keys if t in all_anns[k]}
-        n_raters = len(ratings)
-        if n_raters == 0:
-            per_task.append((t, 0, {}, None))
-            continue
-        counts = {}
-        for label in ratings.values():
-            counts[label] = counts.get(label, 0) + 1
-        agree = len(set(ratings.values())) == 1
-        per_task.append((t, n_raters, ratings, agree))
-        if n_raters == len(ann_keys):
-            rows_full.append(counts)
-
-    n_full = len(rows_full)
-    print(f'  Target: {len(target)}  '
-          f'Full coverage (all {len(ann_keys)}): {n_full}  '
-          f'Partial/missing: {len(target) - n_full}')
-
-    if n_full >= 2:
-        kappa = fleiss_kappa(rows_full)
-        print(f'  Fleiss kappa (full-coverage tasks only, n={n_full}): {kappa}')
-    else:
-        print(f'  Not enough full-coverage tasks to compute kappa (need >= 2, have {n_full}).')
-
-    print()
-    print('  Per-task:')
-    name_map = ANNOTATOR_NAMES
-    for t, n_raters, ratings, agree in per_task:
-        if n_raters == 0:
-            print(f'    task_{t}: no annotations')
-            continue
-        detail = '  '.join(f'{name_map.get(k, k)}={v}' for k, v in ratings.items())
-        status = 'AGREE' if agree else 'DISAGREE'
-        print(f'    task_{t} ({n_raters} raters): {detail}  {status}')
-    print()
-
-
-def report_pair(name_a, ann_a, name_b, ann_b, task_ids):
-    print(f'=== Cohen kappa — {name_a} vs {name_b} ===')
-    target = _normalise_ids(task_ids)
-    ids_a, ids_b = set(ann_a), set(ann_b)
-
-    both = sorted(target & ids_a & ids_b)
-    only_a = sorted(target & ids_a - ids_b)
-    only_b = sorted(target & ids_b - ids_a)
-    neither = sorted(target - ids_a - ids_b)
-
-    print(f'  Target: {len(target)}  '
-          f'Both: {len(both)}  '
-          f'Only {name_a}: {len(only_a)}  '
-          f'Only {name_b}: {len(only_b)}  '
-          f'Neither: {len(neither)}')
+    print(f'\n=== {name_a} vs {name_b}  (target {len(target)}, both annotated {len(both)}) ===')
 
     if len(both) < 2:
-        print('  Not enough overlap to compute kappa.')
-        print()
+        print('  Not enough overlap.')
+        log[f'{name_a}_vs_{name_b}'] = {'n': len(both)}
         return
 
-    labels_a = [ann_a[t] for t in both]
-    labels_b = [ann_b[t] for t in both]
-    kappa = compute_cohens_kappa(labels_a, labels_b)
-    agree_n = sum(a == b for a, b in zip(labels_a, labels_b))
-    print(f'  Cohen kappa: {kappa}  '
-          f'({agree_n}/{len(both)} agree, {len(both)-agree_n}/{len(both)} disagree)')
-    print()
+    cls_a = [ann_a[t]['class'] for t in both]
+    cls_b = [ann_b[t]['class'] for t in both]
+    cls_a = ['unknown' if c is None else c for c in cls_a]
+    cls_b = ['unknown' if c is None else c for c in cls_b]
 
-    for t in both:
-        status = 'AGREE' if ann_a[t] == ann_b[t] else 'DISAGREE'
-        print(f'    task_{t}: {name_a}={ann_a[t]}  {name_b}={ann_b[t]}  {status}')
-    print()
+    raw_agree = sum(1 for x, y in zip(cls_a, cls_b) if x == y) / len(both)
+    kappa = compute_cohens_kappa(cls_a, cls_b)
+    ac1 = gwets_ac1(cls_a, cls_b)
+
+    t_pairs = [(ann_a[t]['t_star'], ann_b[t]['t_star']) for t in both]
+    tstats = t_star_stats(t_pairs)
+
+    print(f'  failure_class:  raw_agreement={raw_agree:.3f}  kappa={kappa}  AC1={ac1}')
+    if tstats:
+        print(f'  t_star:         exact={tstats["exact_match_rate"]}  within1={tstats["within_1_rate"]}  '
+              f'within3={tstats["within_3_rate"]}  mean_abs={tstats["mean_abs_diff"]}')
+
+    log[f'{name_a}_vs_{name_b}'] = {
+        'n': len(both),
+        'failure_class': {
+            'raw_agreement': round(raw_agree, 4),
+            'cohens_kappa': kappa,
+            'gwets_ac1': ac1,
+        },
+        't_star': tstats,
+        'tasks': both,
+    }
+
+
+def report_fleiss(all_anns, task_ids, log):
+    print(f'\n=== Fleiss kappa (all 4 annotators, target {len(task_ids)}) ===')
+    target = _normalise_ids(task_ids)
+    rows = []
+    coverage = []
+    cls_lists = {k: [] for k in all_anns}
+    for t in sorted(target):
+        ratings = {k: all_anns[k][t]['class']
+                   for k in all_anns if t in all_anns[k] and all_anns[k][t]['class']}
+        coverage.append((t, len(ratings)))
+        if len(ratings) == len(all_anns):
+            counts = Counter(ratings.values())
+            rows.append(dict(counts))
+            for k, v in ratings.items():
+                cls_lists[k].append(v)
+
+    n_full = len(rows)
+    if n_full < 2:
+        print(f'  Not enough full-coverage tasks ({n_full}/{len(target)}).')
+        log['fleiss_shared_20'] = {'n_full_coverage': n_full}
+        return
+
+    fk = fleiss_kappa(rows)
+    print(f'  Fleiss kappa (n={n_full}): {fk}')
+
+    # pairwise AC1 / kappa within shared set
+    pair_metrics = {}
+    keys = list(all_anns.keys())
+    for i, ka in enumerate(keys):
+        for kb in keys[i + 1:]:
+            la = []
+            lb = []
+            for t in sorted(target):
+                if t in all_anns[ka] and t in all_anns[kb]:
+                    ca = all_anns[ka][t]['class']; cb = all_anns[kb][t]['class']
+                    if ca and cb:
+                        la.append(ca); lb.append(cb)
+            if len(la) >= 2:
+                pair_metrics[f'{ANNOTATOR_NAMES[ka]}_vs_{ANNOTATOR_NAMES[kb]}'] = {
+                    'n': len(la),
+                    'cohens_kappa': compute_cohens_kappa(la, lb),
+                    'gwets_ac1': gwets_ac1(la, lb),
+                    'raw_agreement': round(sum(1 for x, y in zip(la, lb) if x == y) / len(la), 4),
+                }
+
+    log['fleiss_shared_20'] = {
+        'n_full_coverage': n_full,
+        'fleiss_kappa': fk,
+        'pairwise_within_shared': pair_metrics,
+    }
+    print(f'  Pairwise within shared-20:')
+    for k, v in pair_metrics.items():
+        print(f'    {k}: kappa={v["cohens_kappa"]}  AC1={v["gwets_ac1"]}  raw={v["raw_agreement"]}  n={v["n"]}')
 
 
 # ---------------------------------------------------------------------------
@@ -198,26 +260,34 @@ def main():
     for key, path in ANNOTATOR_DIRS.items():
         ann = load(path)
         all_anns[key] = ann
-        print(f'{ANNOTATOR_NAMES[key]} ({key}): {len(ann)} annotations '
-              f'({path})')
-    print()
+        print(f'{ANNOTATOR_NAMES[key]} ({key}): {len(ann)} annotations')
 
-    # Tier 1 — Fleiss on shared 20
-    report_fleiss(all_anns, SHARED_20)
+    log = {'overlap_structure': {
+        'shared_20': SHARED_20,
+        'adithya_muhammad_40': ADITHYA_MUHAMMAD_40,
+        'marlin_rocky_40': MARLIN_ROCKY_40,
+    }}
 
-    # Tier 2 — Cohen: Adithya vs Muhammad on their 40 only
-    report_pair(
-        'Adithya',  all_anns['annotator_1'],
-        'Muhammad', all_anns['annotator_2'],
-        ADITHYA_MUHAMMAD_40,
-    )
+    report_fleiss(all_anns, SHARED_20, log)
+    report_pair('Adithya', all_anns['annotator_1'],
+                'Muhammad', all_anns['annotator_2'],
+                ADITHYA_MUHAMMAD_40, log)
+    report_pair('Marlin', all_anns['annotator_3'],
+                'Rocky', all_anns['annotator_4'],
+                MARLIN_ROCKY_40, log)
 
-    # Tier 3 — Cohen: Marlin vs Rocky on their 40 only
-    report_pair(
-        'Marlin', all_anns['annotator_3'],
-        'Rocky',  all_anns['annotator_4'],
-        MARLIN_ROCKY_40,
-    )
+    # Cross-pair sanity checks (smaller, supplementary)
+    report_pair('Adithya', all_anns['annotator_1'],
+                'Marlin', all_anns['annotator_3'],
+                SHARED_20, log)
+    report_pair('Muhammad', all_anns['annotator_2'],
+                'Rocky', all_anns['annotator_4'],
+                SHARED_20, log)
+
+    os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
+    json.dump(log, open(OUT_PATH, 'w'), indent=2)
+    print(f'\nWrote {OUT_PATH}')
 
 
-main()
+if __name__ == '__main__':
+    main()

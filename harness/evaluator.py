@@ -292,6 +292,11 @@ def run_episode(
         raise ValueError(f"Unknown condition: {condition}. Valid: {VALID_CONDITIONS}")
 
     agent_variant, policy_name = CONDITION_REGISTRY[condition]
+    # oracle_external defaults to live generation: we pass an empty dict so
+    # the policy populates it as the episode runs (instead of falling back
+    # to identity when oracle_states is None).
+    if condition == "oracle_external" and oracle_states is None:
+        oracle_states = {}
     context_policy = _build_context_policy(
         condition,
         window_size=window_size,

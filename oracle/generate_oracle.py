@@ -133,6 +133,55 @@ def build_prompt(task_goal, trajectory, dom, t, version="v2", observation=None):
     )
 
 
+def build_prompt_split(task_goal, trajectory, dom, t, version="v2",
+                       prefix_until_step=None, observation=None):
+    """Same as build_prompt but split into (cacheable_prefix, suffix).
+
+    Use for Exp 3 oracle external regeneration where successive calls
+    on the same trajectory share the early prefix. Pass
+    prefix_until_step=N to put steps 1..N (plus the template instructions
+    and goal) into the cached prefix; the per-call suffix carries the
+    remaining steps + DOM at step t.
+    """
+    template = load_prompt(version)
+    if prefix_until_step is None:
+        # No split — the caller is just asking for the regular prompt.
+        return build_prompt(task_goal, trajectory, dom, t, version, observation), ""
+
+    cached_steps = [s for s in trajectory
+                    if 't' in s and s['t'] <= prefix_until_step]
+    later_steps  = [s for s in trajectory
+                    if 't' in s and prefix_until_step < s['t'] <= t]
+    cached_text = "\n".join(
+        f"Step {s['t']}: thought={s['thought']} | action={s['action']} | observation={s['observation']}"
+        for s in cached_steps
+    )
+    later_text = "\n".join(
+        f"Step {s['t']}: thought={s['thought']} | action={s['action']} | observation={s['observation']}"
+        for s in later_steps
+    )
+    dom_snapshot = dom if dom is not None else observation
+
+    # The cacheable prefix = template head + goal + early-trajectory body.
+    # The suffix = later-trajectory body + DOM at step t + final question.
+    full = template.format(
+        task_goal=task_goal,
+        t=t,
+        trajectory_text=cached_text + ("\n" if later_text else ""),
+        dom_snapshot=dom_snapshot,
+    )
+    # Heuristic split: cache everything up to (and including) the cached_text;
+    # the suffix is the later trajectory and DOM. We approximate by splitting
+    # the rendered template at the dom_snapshot marker.
+    marker = dom_snapshot if dom_snapshot else None
+    if marker and marker in full and later_text:
+        idx = full.index(marker)
+        prefix = full[:idx]
+        suffix = later_text + "\n" + full[idx:]
+        return prefix, suffix
+    return full, ""
+
+
 COST_LOG_PATH = os.path.join(os.path.dirname(__file__), "cost_log.json")
 
 INPUT_TOKEN_RATE = 0.000003   # $3 per 1M input tokens
@@ -170,19 +219,22 @@ def _append_cost_log(trajectory_id, step, prompt_version, input_tokens, output_t
         json.dump(log, f, indent=2)
 
 
-def call_oracle(prompt, use_stub=True, model=None):
+def call_oracle(prompt, use_stub=True, model=None, cached_prefix=None):
     """
     Call the oracle LLM with the filled prompt.
 
-    Uses the unified llm.client.chat_completion, which routes automatically:
-    - OpenRouter models (default): any non-Gemini model slug
-    - Gemini models: pass model="gemini-1.5-pro" or similar and the client
-      routes to the Google API using GEMINI_API_KEY instead.
-
     Args:
-        prompt:   filled prompt string from build_prompt()
-        use_stub: if True, return a fake response without hitting any API
-        model:    OpenRouter slug or Gemini model name
+        prompt:        filled prompt string from build_prompt(), OR (when
+                       cached_prefix is given) the *suffix* portion of the
+                       prompt that should NOT be cached (e.g. the trailing
+                       step-t question + DOM).
+        use_stub:      if True, return a fake response without hitting any API.
+        model:         OpenRouter slug or Gemini model name.
+        cached_prefix: optional string. When set and using a Claude model via
+                       OpenRouter, this is sent as a separate content block
+                       with cache_control={"type": "ephemeral"}, so successive
+                       calls on the same trajectory share the cached prefix.
+                       Cuts repeat input cost by ~90% on Anthropic models.
     """
     if use_stub:
         print("[STUB] call_oracle called - returning fake response")
@@ -195,17 +247,53 @@ def call_oracle(prompt, use_stub=True, model=None):
             "F_t": [],
             "K_t": ["Cheapest laptop is Laptop A", "Price is $299", "Item is in stock"]
         }, indent=2)
-        return {"content": content, "input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
+        return {"content": content, "input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0,
+                "cache_creation_tokens": 0, "cache_read_tokens": 0}
+
+    if cached_prefix is None:
+        messages = [{"role": "user", "content": prompt}]
+    else:
+        # Anthropic prompt caching via OpenRouter: send the stable prefix as a
+        # cached content block, then the per-call suffix.
+        messages = [{"role": "user", "content": [
+            {"type": "text", "text": cached_prefix,
+             "cache_control": {"type": "ephemeral"}},
+            {"type": "text", "text": prompt},
+        ]}]
 
     result = chat_completion(
-        [{"role": "user", "content": prompt}],
+        messages,
         model=model or ORACLE_MODEL,
         temperature=0.0,
     )
     input_tokens = result.prompt_tokens or 0
     output_tokens = result.completion_tokens or 0
-    cost_usd = round((input_tokens * INPUT_TOKEN_RATE) + (output_tokens * OUTPUT_TOKEN_RATE), 6)
-    return {"content": result.content, "input_tokens": input_tokens, "output_tokens": output_tokens, "cost_usd": cost_usd}
+    # Cache hits/creates from OpenRouter usage block (Anthropic-style)
+    usage = (result.raw or {}).get("usage", {}) or {}
+    cache_create = usage.get("cache_creation_input_tokens", 0) or 0
+    cache_read   = usage.get("cache_read_input_tokens", 0) or 0
+    # Use OpenRouter-reported cost when available (already accounts for
+    # cache discount); fall back to estimate.
+    if result.cost_usd is not None:
+        cost_usd = round(result.cost_usd, 6)
+    else:
+        # cache reads bill at ~10% of input rate on Anthropic
+        regular_in = max(0, input_tokens - cache_read)
+        cost_usd = round(
+            regular_in * INPUT_TOKEN_RATE
+            + cache_read * INPUT_TOKEN_RATE * 0.1
+            + cache_create * INPUT_TOKEN_RATE * 1.25
+            + output_tokens * OUTPUT_TOKEN_RATE,
+            6,
+        )
+    return {
+        "content": result.content,
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "cost_usd": cost_usd,
+        "cache_creation_tokens": cache_create,
+        "cache_read_tokens": cache_read,
+    }
 
 
 def save_output(trajectory_id, step, prompt_version, response_dict, output_dir=None):

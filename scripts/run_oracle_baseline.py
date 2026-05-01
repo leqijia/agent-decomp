@@ -24,9 +24,15 @@ def find_trajectory(task_id):
 
 
 def load_annotations():
-    """{(annotator, task_id): t_star_step}"""
+    """{(annotator, task_id): t_star_step} — all 4 annotators."""
     out = {}
-    for who, dir_who in [("annotator_1", "annotations/annotator_1"), ("annotator_2", "annotations/annotator_2")]:
+    annotator_dirs = [
+        ("annotator_1", "annotations/annotator_1"),
+        ("annotator_2", "annotations/annotator_2"),
+        ("annotator_3", "annotations/annotator_3"),
+        ("annotator_4", "annotations/annotator_4"),
+    ]
+    for who, dir_who in annotator_dirs:
         if not os.path.isdir(dir_who):
             continue
         for fn in os.listdir(dir_who):
@@ -35,7 +41,7 @@ def load_annotations():
             d = json.load(open(os.path.join(dir_who, fn)))
             tid = fn.replace("task_", "").replace(".json", "")
             t_star = d.get("t_star_step")
-            if t_star is not None:
+            if t_star is not None and t_star >= 1:  # skip t*=0 (unsolvable-from-start)
                 out[(who, tid)] = t_star
     return out
 
