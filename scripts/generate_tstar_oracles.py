@@ -19,6 +19,8 @@ from oracle.generate_oracle import build_prompt, call_oracle
 ANNOTATION_DIRS = {
     "annotator_1": "annotations/annotator_1",
     "annotator_2": "annotations/annotator_2",
+    "annotator_3": "annotations/annotator_3",
+    "annotator_4": "annotations/annotator_4",
 }
 TRAJ_DIRS = ["trajectories/oracle_copies", "trajectories/data"]
 OUT_ROOT = "oracle/outputs/tstar"
