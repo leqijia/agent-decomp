@@ -1,0 +1,45 @@
+{
+  "trajectory_id": "473",
+  "step": 3,
+  "prompt_version": "v3",
+  "input_tokens": 16602,
+  "output_tokens": 669,
+  "cost_usd": 0.059841,
+  "raw_response": "{\n  \"g\": \"Cancel order 301 in the Magento Admin panel\",\n  \"P_t\": [\n    \"Navigated to the Magento Admin Dashboard\",\n    \"Opened the SALES menu to reveal submenu options\",\n    \"Clicked the Orders link to navigate to the Orders list page\"\n  ],\n  \"R_t\": [\n    \"Clear the active keyword filter '307' from the orders list\",\n    \"Search for or navigate to order 301\",\n    \"Open order 301\",\n    \"Click the Cancel button on order 301's detail page\",\n    \"Confirm the cancellation if prompted\"\n  ],\n  \"e_t\": \"The current page is the Orders list page (http://172.185.52.29:7780/admin/sales/order/). An active keyword filter '307' is applied, resulting in 0 records found ('We couldn't find any records.'). The search textbox still shows '307'. A 'Clear all' button (ID 4213) is visible in the active filters bar. The agent has just clicked 'Clear all' at step 3, but the ground-truth DOM at step 3 still shows the filter '307' active and 0 records \u2014 meaning the page has not yet refreshed to reflect the cleared filter.\",\n  \"C\": [\n    \"The 'Clear all' button must be clicked and the page must reload before order 301 will be visible in the list\",\n    \"Order 301 must exist and be in a cancellable status (e.g., Pending or Processing) for the Cancel action to be available\"\n  ],\n  \"F_t\": [\n    {\n      \"action\": \"Clicked 'Clear all' button (ID 4213) to remove keyword filter '307'\",\n      \"step\": 3,\n      \"cause\": \"The ground-truth DOM at step 3 still shows the active filter 'Keyword: 307' and 0 records found, indicating the page had not yet reloaded after the click \u2014 the filter was not yet cleared at the time the observation was captured\"\n    }\n  ],\n  \"K_t\": [\n    \"The Orders list page URL is http://172.185.52.29:7780/admin/sales/order/\",\n    \"Order 301 can be directly accessed via URL http://172.185.52.29:7780/admin/sales/order/view/order_id/301/\",\n    \"A keyword filter '307' was active on the orders list, causing 0 results to be shown\",\n    \"The 'Clear all' button (ID 4213) was clicked at step 3 to remove the stale filter\",\n    \"The orders table has columns: ID, Purchase Point, Purchase Date, Bill-to Name, Ship-to Name, Grand Total (Base), Grand Total (Purchased), Status, Action\"\n  ]\n}",
+  "parsed": {
+    "g": "Cancel order 301 in the Magento Admin panel",
+    "P_t": [
+      "Navigated to the Magento Admin Dashboard",
+      "Opened the SALES menu to reveal submenu options",
+      "Clicked the Orders link to navigate to the Orders list page"
+    ],
+    "R_t": [
+      "Clear the active keyword filter '307' from the orders list",
+      "Search for or navigate to order 301",
+      "Open order 301",
+      "Click the Cancel button on order 301's detail page",
+      "Confirm the cancellation if prompted"
+    ],
+    "e_t": "The current page is the Orders list page (http://172.185.52.29:7780/admin/sales/order/). An active keyword filter '307' is applied, resulting in 0 records found ('We couldn't find any records.'). The search textbox still shows '307'. A 'Clear all' button (ID 4213) is visible in the active filters bar. The agent has just clicked 'Clear all' at step 3, but the ground-truth DOM at step 3 still shows the filter '307' active and 0 records \u2014 meaning the page has not yet refreshed to reflect the cleared filter.",
+    "C": [
+      "The 'Clear all' button must be clicked and the page must reload before order 301 will be visible in the list",
+      "Order 301 must exist and be in a cancellable status (e.g., Pending or Processing) for the Cancel action to be available"
+    ],
+    "F_t": [
+      {
+        "action": "Clicked 'Clear all' button (ID 4213) to remove keyword filter '307'",
+        "step": 3,
+        "cause": "The ground-truth DOM at step 3 still shows the active filter 'Keyword: 307' and 0 records found, indicating the page had not yet reloaded after the click \u2014 the filter was not yet cleared at the time the observation was captured"
+      }
+    ],
+    "K_t": [
+      "The Orders list page URL is http://172.185.52.29:7780/admin/sales/order/",
+      "Order 301 can be directly accessed via URL http://172.185.52.29:7780/admin/sales/order/view/order_id/301/",
+      "A keyword filter '307' was active on the orders list, causing 0 results to be shown",
+      "The 'Clear all' button (ID 4213) was clicked at step 3 to remove the stale filter",
+      "The orders table has columns: ID, Purchase Point, Purchase Date, Bill-to Name, Ship-to Name, Grand Total (Base), Grand Total (Purchased), Status, Action"
+    ]
+  },
+  "annotator": "annotator_2",
+  "trajectory_source": "trajectories/data\\473.json"
+}
