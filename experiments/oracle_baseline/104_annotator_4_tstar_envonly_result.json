@@ -1,0 +1,41 @@
+{
+  "task_id": 104,
+  "config_file": "/home/leqijia/agent-decomp/config_files/104.json",
+  "sites": [
+    "gitlab"
+  ],
+  "intent": "Display the list of issues in the keycloak/keycloak repository that have labels related to flaky-test",
+  "start_url": "http://172.185.52.29:8023",
+  "model": "qwen/qwen3.5-27b",
+  "agent_variant": "env_only",
+  "observation_type": "accessibility_tree",
+  "action_set_tag": "id_accessibility_tree",
+  "max_steps": 75,
+  "temperature": 0.0,
+  "max_obs_length": 4096,
+  "intervention": {
+    "t_star": 4,
+    "source_trajectory": "trajectories/oracle_copies/104.json",
+    "env_only": true
+  },
+  "started_at": "2026-05-02T05:48:20Z",
+  "ended_at": "2026-05-02T05:48:34Z",
+  "total_steps": 4,
+  "stop_reason": "crash",
+  "success": null,
+  "eval_score": null,
+  "steps": [
+    {
+      "t": 4,
+      "url": "http://172.185.52.29:8023/search?search=keycloak%2Fkeycloak&nav_source=navbar",
+      "observation": "Tab 0 (current): keycloak/keycloak \u00b7 Search \u00b7 GitLab\n\n[3580] RootWebArea 'keycloak/keycloak \u00b7 Search \u00b7 GitLab' focused: True url: http://172.185.52.29:8023/search?search=keycloak%2Fkeycloak&nav_source=navbar\n\t[3628] link 'Skip to content' url: http://172.185.52.29:8023/search?search=keycloak%2Fkeycloak&nav_source=navbar#content-body\n\t\t\t[-1000000569] InlineTextBox 'Skip to content'\n\t\t[-1000000564] InlineTextBox 'GitLab'\n\t[3634] link 'Dashboard' url: http://172.185.52.29:8023/\n\t\t[3635] image ''\n\t[4094] button '' hasPopup: menu expanded: False\n\t[3667] link 'Create new...' url: http://172.185.52.29:8023/projects/new\n\t\t[3668] image ''\n\t\t[3672] image ''\n\t[3685] link 'Issues' url: http://172.185.52.29:8023/dashboard/issues?assignee_username=byteblaze\n\t\t[3686] image ''\n\t\t[3690] generic '13 assigned issues'\n\t\t\t\t[-1000000565] InlineTextBox '13'\n\t[3692] link 'Merge requests' url: http://172.185.52.29:8023/dashboard/merge_requests?assignee_username=byteblaze\n\t\t[3693] image ''\n\t\t[3697] generic '8 merge requests'\n\t\t\t\t[-1000000566] InlineTextBox '8'\n\t\t[3698] image ''\n\t[3712] link 'To-Do List' url: http://172.185.52.29:8023/dashboard/todos\n\t\t[3713] image ''\n\t\t[3717] generic 'Todos count'\n\t\t\t\t[-1000000567] InlineTextBox '5'\n\t[3719] link 'Help' url: http://172.185.52.29:8023/help\n\t\t\t[-1000000568] InlineTextBox 'Help'\n\t\t[3721] image ''\n\t\t[3726] image ''\n\t[3751] link 'Byte Blaze' url: http://172.185.52.29:8023/byteblaze\n\t\t[3752] image 'Byte Blaze' url: https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=48&d=identicon\n\t\t[3753] image ''\n\t[3802] main ''\n\t\t[3805] heading 'Search'\n\t\t\t\t[-1000000561] InlineTextBox 'Search'\n\t\t[4051] StaticText 'What are you searching for?'\n\t\t\t[-1000000582] InlineTextBox 'What are you searching for?'\n\t\t[3939] group ''\n\t\t\t[3931] searchbox 'Search for projects, issues, etc.'\n\t\t\t\t[4052] StaticText 'keycloak/keycloak'\n\t\t\t\t\t[-1000000583] InlineTextBox 'keycloak/keycloak'\n\t\t\t[3934] button 'Clear'\n\t\t\t[3937] button 'Search'\n\t\t[4053] StaticText 'Group'\n\t\t\t[-1000000584] InlineTextBox 'Group'\n\t\t[3945] button 'Any' hasPopup: menu expanded: False\n\t\t\t\t[-1000000585] InlineTextBox 'Any'\n\t\t[4055] StaticText 'Project'\n\t\t\t[-1000000586] InlineTextBox 'Project'\n\t\t[3976] button 'Any' hasPopup: menu expanded: False\n\t\t\t\t[-1000000587] InlineTextBox 'Any'\n\t\t[4004] separator '' orientation: horizontal\n\t\t[4008] link 'Projects 0' url: http://172.185.52.29:8023/search?scope=projects&search=keycloak%2Fkeycloak\n\t\t\t\t[-1000000588] InlineTextBox 'Projects'\n\t\t\t\t[-1000000590] InlineTextBox '0'\n\t\t[4011] link 'Issues 78' url: http://172.185.52.29:8023/search?scope=issues&search=keycloak%2Fkeycloak\n\t\t\t\t[-1000000591] InlineTextBox 'Issues'\n\t\t\t\t[-1000000608] InlineTextBox '78'\n\t\t[4014] link 'Merge requests 99 Result count is over limit.' url: http://172.185.52.29:8023/search?scope=merge_requests&search=keycloak%2Fkeycloak\n\t\t\t\t[-1000000592] InlineTextBox 'Merge requests'\n\t\t\t\t[-1000000605] InlineTextBox '99'\n\t\t\t[4297] image 'Result count is over limit.'\n\t\t[4017] link 'Milestones 0' url: http://172.185.52.29:8023/search?scope=milestones&search=keycloak%2Fkeycloak\n\t\t\t\t[-1000000593] InlineTextBox 'Milestones'\n\t\t\t\t[-1000000602] InlineTextBox '0'\n\t\t[4020] link 'Users 0' url: http://172.185.52.29:8023/search?scope=users&search=keycloak%2Fkeycloak\n\t\t\t\t[-1000000594] InlineTextBox 'Users'\n\t\t\t\t[-1000000599] InlineTextBox '0'\n\t\t[3813] heading \" We couldn't find any projects matching keycloak/keycloak\"\n\t\t\t[3814] image ''\n\t\t\t\t[-1000000595] InlineTextBox \" We couldn't find any projects matching \"\n\t\t\t[3818] code ''\n\t\t\t\t[3573] StaticText 'keycloak/keycloak'\n\t\t\t\t\t[-1000000596] InlineTextBox 'keycloak/keycloak'",
+      "thought": "",
+      "raw_prediction": "[API_ERROR] OpenRouter returned 403: {\"error\":{\"message\":\"Key limit exceeded (total limit). Manage it using https://openrouter.ai/settings/keys\",\"code\":403}}",
+      "action": "",
+      "parse_error": "api_error",
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "latency_ms": 0
+    }
+  ]
+}

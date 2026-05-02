@@ -1,0 +1,42 @@
+{
+  "task_id": 672,
+  "config_file": "/home/leqijia/agent-decomp/config_files/672.json",
+  "sites": [
+    "shopping",
+    "reddit"
+  ],
+  "intent": "Gather the titles of Nintendo Switch Fortnite Wildcat Console EU reviews with 3 stars and less rating from OneStopShop, and post them in the games subreddit under the title \"real user feedback on Nintendo Switch Fortnite Wildcat Console EU\"",
+  "start_url": "http://172.185.52.29:7770",
+  "model": "qwen/qwen3.5-27b",
+  "agent_variant": "oracle_external",
+  "observation_type": "accessibility_tree",
+  "action_set_tag": "id_accessibility_tree",
+  "max_steps": 75,
+  "temperature": 0.0,
+  "max_obs_length": 4096,
+  "intervention": {
+    "t_star": 6,
+    "source_trajectory": "trajectories/oracle_copies/672.json",
+    "env_only": false
+  },
+  "started_at": "2026-05-02T04:47:12Z",
+  "ended_at": "2026-05-02T04:47:35Z",
+  "total_steps": 6,
+  "stop_reason": "crash",
+  "success": null,
+  "eval_score": null,
+  "steps": [
+    {
+      "t": 6,
+      "url": "about:blank",
+      "observation": "Tab 0: One Stop Market | Tab 1 (current): \n\n[1] RootWebArea '' focused: True url: about:blank",
+      "thought": "",
+      "raw_prediction": "[API_ERROR] OpenRouter returned 403: {\"error\":{\"message\":\"Key limit exceeded (total limit). Manage it using https://openrouter.ai/settings/keys\",\"code\":403}}",
+      "action": "",
+      "parse_error": "api_error",
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "latency_ms": 0
+    }
+  ]
+}

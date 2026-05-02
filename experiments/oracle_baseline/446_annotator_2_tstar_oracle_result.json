@@ -1,0 +1,41 @@
+{
+  "task_id": 446,
+  "config_file": "/home/leqijia/agent-decomp/config_files/446.json",
+  "sites": [
+    "gitlab"
+  ],
+  "intent": "Assign the issue regarding 404 in a11yproject to Roshanjossey.",
+  "start_url": "http://172.185.52.29:8023",
+  "model": "qwen/qwen3.5-27b",
+  "agent_variant": "oracle_external",
+  "observation_type": "accessibility_tree",
+  "action_set_tag": "id_accessibility_tree",
+  "max_steps": 75,
+  "temperature": 0.0,
+  "max_obs_length": 4096,
+  "intervention": {
+    "t_star": 10,
+    "source_trajectory": "trajectories/data/446.json",
+    "env_only": false
+  },
+  "started_at": "2026-05-02T04:59:30Z",
+  "ended_at": "2026-05-02T05:00:12Z",
+  "total_steps": 10,
+  "stop_reason": "crash",
+  "success": null,
+  "eval_score": null,
+  "steps": [
+    {
+      "t": 10,
+      "url": "about:blank",
+      "observation": "Tab 0 (current): \n\n[3404] RootWebArea '' focused: True url: about:blank",
+      "thought": "",
+      "raw_prediction": "[API_ERROR] OpenRouter returned 403: {\"error\":{\"message\":\"Key limit exceeded (total limit). Manage it using https://openrouter.ai/settings/keys\",\"code\":403}}",
+      "action": "",
+      "parse_error": "api_error",
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "latency_ms": 0
+    }
+  ]
+}
