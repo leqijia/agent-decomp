@@ -43,6 +43,23 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 os.chdir(REPO)
 
+
+def _bootstrap_env():
+    """Load .env into os.environ without depending on python-dotenv.
+    Subprocesses inherit it via env=os.environ.copy() in run_subproc."""
+    env_path = REPO / ".env"
+    if not env_path.exists():
+        return
+    for line in env_path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+
+_bootstrap_env()
+
 RUN_ID = datetime.now().strftime("%Y%m%d_%H%M%S")
 LOG_DIR = REPO / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
