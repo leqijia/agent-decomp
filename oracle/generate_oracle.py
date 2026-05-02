@@ -118,23 +118,50 @@ def load_prompt(version="v2"):
         return f.read()
 
 
-def build_prompt(task_goal, trajectory, dom, t, version="v2", observation=None):
+def _format_step(s, include_obs):
+    if include_obs:
+        return (f"Step {s['t']}: thought={s['thought']} | "
+                f"action={s['action']} | observation={s['observation']}")
+    return f"Step {s['t']}: thought={s['thought']} | action={s['action']}"
+
+
+def build_prompt(task_goal, trajectory, dom, t, version="v2",
+                 observation=None, last_n_obs=3):
+    """Render the oracle prompt.
+
+    Prior-step observations are huge accessibility trees and dominate the
+    token bill (~96% of trajectory_text at deep t). The oracle's structured
+    fields (P_t, R_t, F_t, K_t) only need thought+action history; e_t comes
+    from the ground-truth DOM at step t, which is passed separately as
+    `dom_snapshot`. We keep full observations on the last `last_n_obs`
+    steps before t so the oracle can ground recent agent beliefs against
+    what was actually visible.
+    """
     template = load_prompt(version)
-    traj_text = "\n".join([
-        f"Step {s['t']}: thought={s['thought']} | action={s['action']} | observation={s['observation']}"
-        for s in trajectory if s['t'] <= t
-    ])
+    obs_floor = t - last_n_obs
+    parts = []
+    for s in trajectory:
+        st = s['t']
+        if st > t:
+            continue
+        if st == t:
+            include_obs = False  # avoid duplicating dom_snapshot
+        else:
+            include_obs = st > obs_floor
+        parts.append(_format_step(s, include_obs))
+    traj_text = "\n".join(parts)
     dom_snapshot = dom if dom is not None else observation
     return template.format(
         task_goal=task_goal,
         t=t,
         trajectory_text=traj_text,
-        dom_snapshot=dom_snapshot
+        dom_snapshot=dom_snapshot,
     )
 
 
 def build_prompt_split(task_goal, trajectory, dom, t, version="v2",
-                       prefix_until_step=None, observation=None):
+                       prefix_until_step=None, observation=None,
+                       last_n_obs=3):
     """Same as build_prompt but split into (cacheable_prefix, suffix).
 
     Use for Exp 3 oracle external regeneration where successive calls
@@ -142,24 +169,36 @@ def build_prompt_split(task_goal, trajectory, dom, t, version="v2",
     prefix_until_step=N to put steps 1..N (plus the template instructions
     and goal) into the cached prefix; the per-call suffix carries the
     remaining steps + DOM at step t.
+
+    Same observation-trimming as build_prompt: thought+action only for
+    steps further than `last_n_obs` before t; full observation for the
+    last `last_n_obs` pre-t steps; step t's DOM is passed separately.
     """
     template = load_prompt(version)
     if prefix_until_step is None:
         # No split — the caller is just asking for the regular prompt.
-        return build_prompt(task_goal, trajectory, dom, t, version, observation), ""
+        return build_prompt(task_goal, trajectory, dom, t, version,
+                            observation, last_n_obs), ""
 
+    obs_floor = t - last_n_obs
     cached_steps = [s for s in trajectory
                     if 't' in s and s['t'] <= prefix_until_step]
     later_steps  = [s for s in trajectory
                     if 't' in s and prefix_until_step < s['t'] <= t]
-    cached_text = "\n".join(
-        f"Step {s['t']}: thought={s['thought']} | action={s['action']} | observation={s['observation']}"
-        for s in cached_steps
-    )
-    later_text = "\n".join(
-        f"Step {s['t']}: thought={s['thought']} | action={s['action']} | observation={s['observation']}"
-        for s in later_steps
-    )
+
+    def _render(steps):
+        out = []
+        for s in steps:
+            st = s['t']
+            if st == t:
+                include_obs = False  # dom_snapshot carries it
+            else:
+                include_obs = st > obs_floor
+            out.append(_format_step(s, include_obs))
+        return "\n".join(out)
+
+    cached_text = _render(cached_steps)
+    later_text  = _render(later_steps)
     dom_snapshot = dom if dom is not None else observation
 
     # The cacheable prefix = template head + goal + early-trajectory body.
