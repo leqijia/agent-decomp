@@ -304,6 +304,7 @@ def call_oracle(prompt, use_stub=True, model=None, cached_prefix=None):
         messages,
         model=model or ORACLE_MODEL,
         temperature=0.0,
+        max_tokens=4096,
     )
     input_tokens = result.prompt_tokens or 0
     output_tokens = result.completion_tokens or 0
