@@ -7,6 +7,10 @@ import argparse
 import json
 import os
 import sys
+try:
+    sys.stdout.reconfigure(line_buffering=True)
+except AttributeError:
+    pass
 sys.path.insert(0, '.')
 from harness.evaluator import run_intervention
 

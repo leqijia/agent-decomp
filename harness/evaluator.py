@@ -78,6 +78,64 @@ def run_acon_compress(
 # Context policies
 # ---------------------------------------------------------------------------
 
+_INTERVENTION_HISTORY_STEPS = int(os.environ.get("INTERVENTION_HISTORY_STEPS", "12"))
+_INTERVENTION_THOUGHT_CHARS = int(os.environ.get("INTERVENTION_THOUGHT_CHARS", "500"))
+
+
+def _clip_text(text: Any, max_chars: int) -> str:
+    s = "" if text is None else str(text)
+    if max_chars <= 0 or len(s) <= max_chars:
+        return s
+    return s[:max_chars] + "...[truncated]"
+
+
+def _serialize_compact_history(
+    steps: list[dict[str, Any]],
+    *,
+    keep_last: int = _INTERVENTION_HISTORY_STEPS,
+) -> str:
+    """Serialize action history without repeating bulky observations."""
+    if not steps:
+        return ""
+    dropped = max(0, len(steps) - keep_last)
+    selected = steps[-keep_last:] if keep_last > 0 else steps
+    lines = []
+    if dropped:
+        lines.append(f"[{dropped} earlier steps omitted from compact history]")
+    for s in selected:
+        if "t" not in s:
+            continue
+        thought = _clip_text(s.get("thought", ""), _INTERVENTION_THOUGHT_CHARS)
+        action = s.get("action", "")
+        parse_error = s.get("parse_error")
+        line = f"Step {s['t']}: thought={thought} | action={action}"
+        if parse_error:
+            line += f" | parse_error={parse_error}"
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def _build_intervention_context(
+    *,
+    env_only: bool,
+    replacement_context: str,
+    pre_intervention_steps: list[dict[str, Any]],
+    resumed_steps: list[dict[str, Any]],
+) -> str:
+    parts: list[str] = []
+    if env_only:
+        raw = _serialize_compact_history(pre_intervention_steps + resumed_steps)
+        if raw:
+            parts.append("COMPACT RAW TRAJECTORY CONTEXT:\n" + raw)
+    else:
+        if replacement_context:
+            parts.append("ORACLE STATE:\n" + replacement_context)
+        resumed = _serialize_compact_history(resumed_steps)
+        if resumed:
+            parts.append("ACTIONS SINCE ORACLE INJECTION:\n" + resumed)
+    return "\n\n".join(parts)
+
+
 def _identity_policy(
     steps_so_far: list[dict], current_observation: str, intent: str
 ) -> str:
@@ -760,7 +818,9 @@ def run_intervention(
 
         recent_parse_failures = 0
         recent_actions: list[str] = []
-        steps_collected: list[dict] = list(stored_steps[:t_star - 1])
+        pre_intervention_steps: list[dict] = list(stored_steps[:t_star - 1])
+        resumed_steps: list[dict] = []
+        steps_collected: list[dict] = list(pre_intervention_steps)
 
         remaining_steps = max_steps - (t_star - 1)
         for t_offset in range(remaining_steps):
@@ -769,13 +829,12 @@ def run_intervention(
             obs_text = obs.get("text", "") if isinstance(obs, dict) else ""
             obs_truncated = truncate_observation(obs_text, max_obs_length)
 
-            if env_only:
-                ctx = serialize_trajectory(steps_collected)
-            else:
-                if t_offset == 0:
-                    ctx = replacement_context
-                else:
-                    ctx = serialize_trajectory(steps_collected)
+            ctx = _build_intervention_context(
+                env_only=env_only,
+                replacement_context=replacement_context,
+                pre_intervention_steps=pre_intervention_steps,
+                resumed_steps=resumed_steps,
+            )
 
             if ctx:
                 augmented_obs = f"CONTEXT:\n{ctx}\n\nCURRENT OBSERVATION:\n{obs_truncated}"
@@ -862,6 +921,7 @@ def run_intervention(
             }
             result_dict["steps"].append(step_dict)
             steps_collected.append(step_dict)
+            resumed_steps.append(step_dict)
             result_dict["total_steps"] = t
 
             if parse_error is not None:
