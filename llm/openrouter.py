@@ -53,7 +53,7 @@ def chat_completion(
     *,
     model: str,
     temperature: float = 0.0,
-    max_tokens: int | None = None,
+    max_tokens: int | None = 2048,
     top_p: float = 1.0,
     stop: list[str] | None = None,
     extra_body: dict[str, Any] | None = None,

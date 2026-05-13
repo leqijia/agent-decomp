@@ -65,7 +65,7 @@ class StateActConfig:
     config_file: str
     model: str
     prompt_path: Path = DEFAULT_PROMPT_PATH
-    max_steps: int = 75
+    max_steps: int = 50
     temperature: float = 0.0
     max_obs_length: int = 4096
     observation_type: str = "accessibility_tree"

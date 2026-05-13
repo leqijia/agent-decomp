@@ -161,7 +161,7 @@ def main() -> int:
     )
     parser.add_argument("--model", default=AGENT_MODEL,
                         help=f"Agent model slug (default: {AGENT_MODEL})")
-    parser.add_argument("--max-steps", type=int, default=75)
+    parser.add_argument("--max-steps", type=int, default=50)
     parser.add_argument("--max-obs-length", type=int, default=4096)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument(

@@ -1,9 +1,9 @@
-"""Run Exp 1 full-oracle and env-only-control intervention at each annotated t*.
+"""Run Exp 1 full-oracle and env-only-control intervention at annotated t*.
 
-Reads annotations from annotations/annotator_<N>/task_<id>.json and the matching
-t*-step oracle from oracle/outputs/tstar/annotator_<N>/<id>_tstar.json. Skips
-tasks where either is missing. Writes results to experiments/oracle_baseline/.
+By default this runs only the primary resolved t* per trajectory, which is the
+headline alpha estimate. Use `--mode all` to run every annotator entry.
 """
+import argparse
 import json
 import os
 import sys
@@ -13,6 +13,7 @@ from harness.evaluator import run_intervention
 TRAJ_DIRS = ['trajectories/oracle_copies', 'trajectories/data']
 RESULTS_DIR = 'experiments/oracle_baseline'
 os.makedirs(RESULTS_DIR, exist_ok=True)
+RESOLVED_PATH = 'experiments/tstar_resolved.json'
 
 
 def find_trajectory(task_id):
@@ -23,7 +24,7 @@ def find_trajectory(task_id):
     return None
 
 
-def load_annotations():
+def load_all_annotations():
     """{(annotator, task_id): t_star_step} — all 4 annotators."""
     out = {}
     annotator_dirs = [
@@ -46,6 +47,28 @@ def load_annotations():
     return out
 
 
+def load_primary_annotations():
+    """{(annotator, task_id): t_star_step} for the resolved primary t* only."""
+    if not os.path.exists(RESOLVED_PATH):
+        print(f"WARNING: {RESOLVED_PATH} not found; falling back to all annotations.")
+        return load_all_annotations()
+    resolved = json.load(open(RESOLVED_PATH))
+    out = {}
+    for tid, info in resolved.items():
+        primary_t = info.get('primary_t_star')
+        if primary_t is None or primary_t < 1:
+            continue
+        for ann in info.get('annotators', []):
+            ann_path = f'annotations/{ann}/task_{tid}.json'
+            if not os.path.exists(ann_path):
+                continue
+            d = json.load(open(ann_path))
+            if d.get('t_star_step') == primary_t:
+                out[(ann, tid)] = primary_t
+                break
+    return out
+
+
 def retryable_crash(path):
     """Existing result is not terminal if it crashed before scoring."""
     if not os.path.exists(path):
@@ -57,51 +80,65 @@ def retryable_crash(path):
     return d.get('success') is None and d.get('stop_reason') == 'crash'
 
 
-jobs = load_annotations()
-print(f"Found {len(jobs)} annotation entries")
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        '--mode',
+        choices=['primary', 'all'],
+        default='primary',
+        help='primary = one resolved t* per task; all = every annotator t* entry.',
+    )
+    args = ap.parse_args()
 
-for (who, task_id), t_star in sorted(jobs.items()):
-    tag = f"{task_id}_{who}"
-    oracle_out = os.path.join(RESULTS_DIR, f'{tag}_tstar_oracle_result.json')
-    envonly_out = os.path.join(RESULTS_DIR, f'{tag}_tstar_envonly_result.json')
-    traj_path = find_trajectory(task_id)
-    tstar_path = os.path.join(f'oracle/outputs/tstar/{who}', f'{task_id}_tstar.json')
+    jobs = load_primary_annotations() if args.mode == 'primary' else load_all_annotations()
+    print(f"Found {len(jobs)} annotation entries (mode={args.mode})")
 
-    if traj_path is None:
-        print(f'SKIP {task_id}: trajectory not found in oracle_copies/ or data/')
-        continue
-    if not os.path.exists(tstar_path):
-        print(f'SKIP {task_id}: tstar oracle not found')
-        continue
+    for (who, task_id), t_star in sorted(jobs.items()):
+        tag = f"{task_id}_{who}"
+        oracle_out = os.path.join(RESULTS_DIR, f'{tag}_tstar_oracle_result.json')
+        envonly_out = os.path.join(RESULTS_DIR, f'{tag}_tstar_envonly_result.json')
+        traj_path = find_trajectory(task_id)
+        tstar_path = os.path.join(f'oracle/outputs/tstar/{who}', f'{task_id}_tstar.json')
 
-    tstar_data = json.load(open(tstar_path))
-    parsed = tstar_data.get('parsed', {})
-    replacement_context = json.dumps(parsed, indent=2)
+        if traj_path is None:
+            print(f'SKIP {task_id}: trajectory not found in oracle_copies/ or data/')
+            continue
+        if not os.path.exists(tstar_path):
+            print(f'SKIP {task_id}: tstar oracle not found')
+            continue
 
-    if os.path.exists(oracle_out) and not retryable_crash(oracle_out):
-        print(f'SKIP {task_id} oracle already done')
-    else:
-        print(f'Running {task_id} t*={t_star} FULL ORACLE')
-        result = run_intervention(
-            trajectory_path=traj_path,
-            t_star=t_star,
-            replacement_context=replacement_context,
-            env_only=False,
-            out_path=oracle_out,
-        )
-        print(f'  => success={result["success"]} stop={result["stop_reason"]}')
+        tstar_data = json.load(open(tstar_path))
+        parsed = tstar_data.get('parsed', {})
+        replacement_context = json.dumps(parsed, indent=2)
 
-    if os.path.exists(envonly_out) and not retryable_crash(envonly_out):
-        print(f'SKIP {task_id} envonly already done')
-    else:
-        print(f'Running {task_id} t*={t_star} ENV ONLY')
-        result = run_intervention(
-            trajectory_path=traj_path,
-            t_star=t_star,
-            replacement_context='',
-            env_only=True,
-            out_path=envonly_out,
-        )
-        print(f'  => success={result["success"]} stop={result["stop_reason"]}')
+        if os.path.exists(oracle_out) and not retryable_crash(oracle_out):
+            print(f'SKIP {task_id} oracle already done')
+        else:
+            print(f'Running {task_id} t*={t_star} FULL ORACLE')
+            result = run_intervention(
+                trajectory_path=traj_path,
+                t_star=t_star,
+                replacement_context=replacement_context,
+                env_only=False,
+                out_path=oracle_out,
+            )
+            print(f'  => success={result["success"]} stop={result["stop_reason"]}')
 
-print('Done.')
+        if os.path.exists(envonly_out) and not retryable_crash(envonly_out):
+            print(f'SKIP {task_id} envonly already done')
+        else:
+            print(f'Running {task_id} t*={t_star} ENV ONLY')
+            result = run_intervention(
+                trajectory_path=traj_path,
+                t_star=t_star,
+                replacement_context='',
+                env_only=True,
+                out_path=envonly_out,
+            )
+            print(f'  => success={result["success"]} stop={result["stop_reason"]}')
+
+    print('Done.')
+
+
+if __name__ == '__main__':
+    main()

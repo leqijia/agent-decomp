@@ -65,8 +65,8 @@ stage 1 "Generate t*-specific oracle states for all 4 annotators"
 python scripts/generate_tstar_oracles.py 2>&1 | tee -a "$LOG"
 
 # -----------------------------------------------------------------------------
-stage 2 "Run Exp 1 oracle + env_only at every annotated t*"
-python scripts/run_oracle_baseline.py 2>&1 | tee -a "$LOG"
+stage 2 "Run Exp 1 oracle + env_only at resolved primary t*"
+python scripts/run_oracle_baseline.py --mode primary 2>&1 | tee -a "$LOG"
 
 # -----------------------------------------------------------------------------
 stage 3 "Recompute kappa, primary alpha, upper-bound alpha"

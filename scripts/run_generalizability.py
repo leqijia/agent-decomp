@@ -90,7 +90,7 @@ def main():
     ap.add_argument('--max-cost-usd', type=float, default=400.0,
                     help='Stop early if running spend exceeds this estimate.')
     ap.add_argument('--out-dir', default=OUT_DIR)
-    ap.add_argument('--max-steps', type=int, default=75)
+    ap.add_argument('--max-steps', type=int, default=50)
     args = ap.parse_args()
 
     os.makedirs(args.out_dir, exist_ok=True)
