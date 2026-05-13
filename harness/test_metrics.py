@@ -48,7 +48,12 @@ total = round(alpha["alpha_context"] + alpha["alpha_env"] + alpha["alpha_capabil
 assert total == 1.0, f"components should sum to 1.0, got {total}"
 # CI bounds are valid ranges
 for key, bounds in alpha["ci_95"].items():
-    assert 0.0 <= bounds[0] <= bounds[1] <= 1.0, f"CI out of range for {key}: {bounds}"
+    lower = -1.0 if key == "alpha_context" else 0.0
+    assert lower <= bounds[0] <= bounds[1] <= 1.0, f"CI out of range for {key}: {bounds}"
+negative_alpha = compute_alpha_decomposition(env_results, full_results)
+print(json.dumps(negative_alpha, indent=2))
+assert negative_alpha["alpha_context"] == -0.4
+assert negative_alpha["ci_95"]["alpha_context"][0] < 0
 print("PASS\n")
 
 

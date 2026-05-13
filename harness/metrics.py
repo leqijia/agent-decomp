@@ -41,6 +41,45 @@ def _wilson_ci(successes: int, n: int, z: float = 1.96) -> tuple[float, float]:
     return (round(max(0.0, centre - margin), 4), round(min(1.0, centre + margin), 4))
 
 
+def _diff_ci(
+    full_results: list[dict],
+    env_results: list[dict],
+    z: float = 1.96,
+) -> tuple[float, float]:
+    """Normal-approximation CI for R_full - R_env.
+
+    The context component is a signed difference, not a proportion. Prefer a
+    paired interval when the two condition result lists are aligned; fall back
+    to an independent two-proportion interval otherwise.
+    """
+    paired = [
+        ((1 if f["success"] else 0) - (1 if e["success"] else 0))
+        for f, e in zip(full_results, env_results)
+        if f.get("success") is not None and e.get("success") is not None
+    ]
+    if len(paired) >= 2 and len(full_results) == len(env_results):
+        mean = sum(paired) / len(paired)
+        var = sum((x - mean) ** 2 for x in paired) / (len(paired) - 1)
+        se = math.sqrt(var / len(paired))
+    else:
+        full_scored = [r for r in full_results if r.get("success") is not None]
+        env_scored = [r for r in env_results if r.get("success") is not None]
+        if not full_scored or not env_scored:
+            return (0.0, 0.0)
+        p_full = sum(1 for r in full_scored if r["success"]) / len(full_scored)
+        p_env = sum(1 for r in env_scored if r["success"]) / len(env_scored)
+        mean = p_full - p_env
+        se = math.sqrt(
+            p_full * (1 - p_full) / len(full_scored)
+            + p_env * (1 - p_env) / len(env_scored)
+        )
+
+    return (
+        round(max(-1.0, mean - z * se), 4),
+        round(min(1.0, mean + z * se), 4),
+    )
+
+
 def _length_bin(total_steps: int) -> str | None:
     if total_steps <= 10:
         return "<=10"
@@ -103,13 +142,13 @@ def compute_alpha_decomposition(full_results: list[dict], env_results: list[dict
     alpha_env        = round(R_env, 4)
     alpha_capability = round(1.0 - R_full, 4)
 
-    # Wilson CIs treat each alpha as a proportion derived from the relevant sample
+    # Wilson CIs are valid for the proportion-valued components.
     succ_full = round(R_full * n_full)
     succ_env  = round(R_env  * n_env)
 
-    # alpha_context: difference of two proportions — use the full-condition sample
-    # as the anchor (conservative approximation)
-    ci_context    = _wilson_ci(round(alpha_context * n_full), n_full)
+    # alpha_context is a signed difference of recovery rates; it can be
+    # negative in partial runs or when oracle context hurts.
+    ci_context    = _diff_ci(full_results, env_results)
     ci_env        = _wilson_ci(succ_env, n_env)
     ci_capability = _wilson_ci(n_full - succ_full, n_full)
 
