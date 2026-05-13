@@ -485,6 +485,9 @@ def run_episode(
                 prompt_tokens = chat.prompt_tokens
                 completion_tokens = chat.completion_tokens
                 latency_ms = chat.latency_ms
+                cost_usd = chat.cost_usd
+            else:
+                cost_usd = None
 
             try:
                 action_str = extract_action(template, raw_prediction)
@@ -507,6 +510,7 @@ def run_episode(
                 "action": action_str, "parse_error": parse_error,
                 "prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens,
                 "latency_ms": latency_ms,
+                "cost_usd": cost_usd,
             }
             result_dict["steps"].append(step_dict)
             steps_so_far.append(step_dict)
@@ -828,6 +832,9 @@ def run_intervention(
                 prompt_tokens = chat.prompt_tokens
                 completion_tokens = chat.completion_tokens
                 latency_ms = chat.latency_ms
+                cost_usd = chat.cost_usd
+            else:
+                cost_usd = None
 
             try:
                 action_str = extract_action(template, raw_prediction)
@@ -850,6 +857,7 @@ def run_intervention(
                 "action": action_str, "parse_error": parse_error,
                 "prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens,
                 "latency_ms": latency_ms,
+                "cost_usd": cost_usd,
                 "is_intervention": t_offset == 0,
             }
             result_dict["steps"].append(step_dict)
