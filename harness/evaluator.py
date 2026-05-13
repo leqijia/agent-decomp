@@ -945,6 +945,7 @@ def evaluate_batch(
     config_files: list[str],
     *,
     out_dir: str,
+    rerun_crashes: bool = False,
     **kwargs,
 ) -> list[dict]:
     """Run run_episode on all config files for a given condition.
@@ -963,10 +964,18 @@ def evaluate_batch(
 
         out_file = out_dir_path / f"{task_id}.json"
         if out_file.exists():
-            print(f"[{i+1}/{total}] Skipping task {task_id} (already exists)")
             with open(out_file) as f:
-                results.append(json.load(f))
-            continue
+                existing = json.load(f)
+            retryable = (
+                rerun_crashes
+                and existing.get("success") is None
+                and existing.get("stop_reason") == "crash"
+            )
+            if not retryable:
+                print(f"[{i+1}/{total}] Skipping task {task_id} (already exists)")
+                results.append(existing)
+                continue
+            print(f"[{i+1}/{total}] Rerunning task {task_id} (existing retryable crash)")
 
         print(f"[{i+1}/{total}] Running task {task_id} under condition={condition}")
         try:

@@ -177,6 +177,10 @@ def main() -> int:
         help="Skip the WebArena cookie refresh (useful for dry-run / local tests).",
     )
     parser.add_argument(
+        "--rerun-crashes", action="store_true",
+        help="Rerun existing retryable crash outputs instead of treating them as complete.",
+    )
+    parser.add_argument(
         "--perfect-retrieval-k", type=int, default=None,
         help="k for the perfect_retrieval policy (only used when --condition=perfect_retrieval).",
     )
@@ -227,6 +231,7 @@ def main() -> int:
         "max_obs_length": args.max_obs_length,
         "temperature": args.temperature,
         "thinking": args.thinking,
+        "rerun_crashes": args.rerun_crashes,
     }
     if args.window_size is not None:
         kwargs["window_size"] = args.window_size

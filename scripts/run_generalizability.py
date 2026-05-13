@@ -73,6 +73,16 @@ def find_tstar_oracle(task_id, annotator):
     return p if os.path.exists(p) else None
 
 
+def retryable_crash(path):
+    if not os.path.exists(path):
+        return False
+    try:
+        d = json.load(open(path))
+    except json.JSONDecodeError:
+        return True
+    return d.get('success') is None and d.get('stop_reason') == 'crash'
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--subset-size', type=int, default=100)
@@ -130,7 +140,7 @@ def main():
         out_full = os.path.join(args.out_dir, f'{tag}_tstar_oracle_result.json')
         out_env = os.path.join(args.out_dir, f'{tag}_tstar_envonly_result.json')
 
-        if not os.path.exists(out_full):
+        if not os.path.exists(out_full) or retryable_crash(out_full):
             print(f'  [{tid}] FULL  t*={primary_t} ', end='', flush=True)
             t0 = time.time()
             try:
@@ -151,7 +161,7 @@ def main():
         else:
             print(f'  [{tid}] FULL already exists — skip')
 
-        if not os.path.exists(out_env):
+        if not os.path.exists(out_env) or retryable_crash(out_env):
             print(f'  [{tid}] ENV   t*={primary_t} ', end='', flush=True)
             t0 = time.time()
             try:

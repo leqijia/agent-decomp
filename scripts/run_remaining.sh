@@ -20,7 +20,7 @@
 # Total estimated spend: ~$500 (Qwen ~$130, oracle ~$90, GPT-5.2 ~$300).
 # Idempotent: every stage skips work whose output already exists.
 
-set -uo pipefail
+set -euo pipefail
 cd "$(dirname "$0")/.."
 
 SKIP_GPT52=0
@@ -33,11 +33,32 @@ done
 # Sites must be up before any agent run; bring up the containers if not.
 docker start shopping shopping_admin gitlab forum >/dev/null 2>&1 || true
 
+RAW_DATA_DIR=trajectories/data
+ORACLE_EXTERNAL_DATA_DIR=trajectories/oracle_external
 LOG=experiments/run_remaining.log
 mkdir -p experiments
 echo "==== run_remaining started $(date -u +%FT%TZ) ====" | tee -a "$LOG"
 
 stage() { echo -e "\n=== STAGE $1: $2 ===" | tee -a "$LOG"; }
+
+# -----------------------------------------------------------------------------
+stage "PRE" "Preflight dependencies, WebArena, and OpenRouter"
+PREFLIGHT_ARGS=()
+if [ "$SKIP_GPT52" -eq 1 ]; then
+  PREFLIGHT_ARGS+=(--skip-gpt52)
+fi
+python scripts/preflight_remaining.py "${PREFLIGHT_ARGS[@]}" 2>&1 | tee -a "$LOG"
+
+# -----------------------------------------------------------------------------
+stage 0 "Refresh Exp 3 raw manifest from current raw trajectories"
+python scripts/build_exp3_raw_manifest.py \
+    --data-dir "$RAW_DATA_DIR" \
+    --out-dir experiments/exp3/raw \
+    --condition raw \
+    --experiment-id exp3 2>&1 | tee -a "$LOG"
+python scripts/compute_condition_metrics.py \
+    --results experiments/exp3/raw/results.json \
+    --out     experiments/exp3/raw/metrics.json 2>&1 | tee -a "$LOG"
 
 # -----------------------------------------------------------------------------
 stage 1 "Generate t*-specific oracle states for all 4 annotators"
@@ -60,7 +81,8 @@ for COND in sliding_window observation_masking acon agentdiet perfect_retrieval;
   python scripts/run_condition_batch.py --condition "$COND" \
       --task-list experiments/exp3/raw/manifest.csv \
       --out-dir   "experiments/baselines/${COND}/data" \
-      --model     qwen/qwen3.5-27b 2>&1 | tee -a "$LOG"
+      --model     qwen/qwen3.5-27b \
+      --rerun-crashes 2>&1 | tee -a "$LOG"
   python scripts/build_condition_manifest.py \
       --data-dir "experiments/baselines/${COND}/data" \
       --out-dir  "experiments/baselines/${COND}" \
@@ -75,7 +97,8 @@ stage 5 "Run Exp 3 self-generated state (StateAct) on full task suite"
 python scripts/run_condition_batch.py --condition self_generated \
     --task-list experiments/exp3/raw/manifest.csv \
     --out-dir   experiments/exp3/self_generated/data \
-    --model     qwen/qwen3.5-27b 2>&1 | tee -a "$LOG"
+    --model     qwen/qwen3.5-27b \
+    --rerun-crashes 2>&1 | tee -a "$LOG"
 python scripts/build_condition_manifest.py \
     --data-dir experiments/exp3/self_generated/data \
     --out-dir  experiments/exp3/self_generated \
@@ -88,10 +111,11 @@ python scripts/compute_condition_metrics.py \
 stage 6 "Run Exp 3 oracle-external (prompt-cached oracle) on full suite"
 python scripts/run_condition_batch.py --condition oracle_external \
     --task-list experiments/exp3/raw/manifest.csv \
-    --out-dir   experiments/exp3/oracle_external/data \
-    --model     qwen/qwen3.5-27b 2>&1 | tee -a "$LOG"
+    --out-dir   "$ORACLE_EXTERNAL_DATA_DIR" \
+    --model     qwen/qwen3.5-27b \
+    --rerun-crashes 2>&1 | tee -a "$LOG"
 python scripts/build_condition_manifest.py \
-    --data-dir experiments/exp3/oracle_external/data \
+    --data-dir "$ORACLE_EXTERNAL_DATA_DIR" \
     --out-dir  experiments/exp3/oracle_external \
     --condition oracle_external --experiment-id exp3 2>&1 | tee -a "$LOG"
 python scripts/compute_condition_metrics.py \

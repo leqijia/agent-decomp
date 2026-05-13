@@ -46,6 +46,17 @@ def load_annotations():
     return out
 
 
+def retryable_crash(path):
+    """Existing result is not terminal if it crashed before scoring."""
+    if not os.path.exists(path):
+        return False
+    try:
+        d = json.load(open(path))
+    except json.JSONDecodeError:
+        return True
+    return d.get('success') is None and d.get('stop_reason') == 'crash'
+
+
 jobs = load_annotations()
 print(f"Found {len(jobs)} annotation entries")
 
@@ -67,7 +78,7 @@ for (who, task_id), t_star in sorted(jobs.items()):
     parsed = tstar_data.get('parsed', {})
     replacement_context = json.dumps(parsed, indent=2)
 
-    if os.path.exists(oracle_out):
+    if os.path.exists(oracle_out) and not retryable_crash(oracle_out):
         print(f'SKIP {task_id} oracle already done')
     else:
         print(f'Running {task_id} t*={t_star} FULL ORACLE')
@@ -80,7 +91,7 @@ for (who, task_id), t_star in sorted(jobs.items()):
         )
         print(f'  => success={result["success"]} stop={result["stop_reason"]}')
 
-    if os.path.exists(envonly_out):
+    if os.path.exists(envonly_out) and not retryable_crash(envonly_out):
         print(f'SKIP {task_id} envonly already done')
     else:
         print(f'Running {task_id} t*={t_star} ENV ONLY')
