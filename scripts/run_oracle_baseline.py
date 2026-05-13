@@ -88,12 +88,40 @@ def main():
         default='primary',
         help='primary = one resolved t* per task; all = every annotator t* entry.',
     )
+    ap.add_argument('--max-steps', type=int, default=50)
+    ap.add_argument(
+        '--max-new-results',
+        type=int,
+        default=None,
+        help='Stop after writing this many new/rerun result files.',
+    )
+    ap.add_argument(
+        '--max-new-cost-usd',
+        type=float,
+        default=None,
+        help='Stop after newly run result files report this much OpenRouter cost.',
+    )
     args = ap.parse_args()
 
     jobs = load_primary_annotations() if args.mode == 'primary' else load_all_annotations()
     print(f"Found {len(jobs)} annotation entries (mode={args.mode})")
+    new_results = 0
+    new_cost = 0.0
+
+    def limit_reached():
+        if args.max_new_results is not None and new_results >= args.max_new_results:
+            return True
+        if args.max_new_cost_usd is not None and new_cost >= args.max_new_cost_usd:
+            return True
+        return False
 
     for (who, task_id), t_star in sorted(jobs.items()):
+        if limit_reached():
+            print(
+                f"Stopping early: new_results={new_results}, "
+                f"new_cost=${new_cost:.4f}"
+            )
+            break
         tag = f"{task_id}_{who}"
         oracle_out = os.path.join(RESULTS_DIR, f'{tag}_tstar_oracle_result.json')
         envonly_out = os.path.join(RESULTS_DIR, f'{tag}_tstar_envonly_result.json')
@@ -114,30 +142,40 @@ def main():
         if os.path.exists(oracle_out) and not retryable_crash(oracle_out):
             print(f'SKIP {task_id} oracle already done')
         else:
+            if limit_reached():
+                break
             print(f'Running {task_id} t*={t_star} FULL ORACLE')
             result = run_intervention(
                 trajectory_path=traj_path,
                 t_star=t_star,
                 replacement_context=replacement_context,
+                max_steps=args.max_steps,
                 env_only=False,
                 out_path=oracle_out,
             )
+            new_results += 1
+            new_cost += sum((s.get('cost_usd') or 0) for s in result.get('steps', []))
             print(f'  => success={result["success"]} stop={result["stop_reason"]}')
 
         if os.path.exists(envonly_out) and not retryable_crash(envonly_out):
             print(f'SKIP {task_id} envonly already done')
         else:
+            if limit_reached():
+                break
             print(f'Running {task_id} t*={t_star} ENV ONLY')
             result = run_intervention(
                 trajectory_path=traj_path,
                 t_star=t_star,
                 replacement_context='',
+                max_steps=args.max_steps,
                 env_only=True,
                 out_path=envonly_out,
             )
+            new_results += 1
+            new_cost += sum((s.get('cost_usd') or 0) for s in result.get('steps', []))
             print(f'  => success={result["success"]} stop={result["stop_reason"]}')
 
-    print('Done.')
+    print(f'Done. New/rerun result files: {new_results}; reported new cost: ${new_cost:.4f}')
 
 
 if __name__ == '__main__':
