@@ -60,6 +60,13 @@ def alpha_for(picked_pairs, results):
     """picked_pairs: iterable of (task_id, annotator) — pick those results.
     Returns alpha decomposition or None if too few pairs.
     """
+    def usable(r):
+        if r is None or r.get('success') is None:
+            return False
+        if r.get('stop_reason') == 'max_steps' and r.get('intervention') and not r.get('steps'):
+            return False
+        return True
+
     full = []
     env = []
     for tid, ann in picked_pairs:
@@ -67,9 +74,7 @@ def alpha_for(picked_pairs, results):
             continue
         r_full = results.get((tid, ann, 'oracle'))
         r_env  = results.get((tid, ann, 'envonly'))
-        if r_full is None or r_env is None:
-            continue
-        if r_full.get('success') is None or r_env.get('success') is None:
+        if not usable(r_full) or not usable(r_env):
             continue
         full.append(r_full); env.append(r_env)
     if len(full) < 3:

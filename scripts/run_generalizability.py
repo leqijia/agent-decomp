@@ -80,7 +80,11 @@ def retryable_crash(path):
         d = json.load(open(path))
     except json.JSONDecodeError:
         return True
-    return d.get('success') is None and d.get('stop_reason') == 'crash'
+    if d.get('success') is None:
+        return True
+    if d.get('stop_reason') == 'max_steps' and d.get('intervention') and not d.get('steps'):
+        return True
+    return False
 
 
 def main():

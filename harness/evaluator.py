@@ -743,6 +743,7 @@ def run_intervention(
             "t_star": t_star,
             "source_trajectory": trajectory_path,
             "env_only": env_only,
+            "max_resume_steps": max_steps,
         },
         "started_at": now_iso(),
         "ended_at": "",
@@ -822,8 +823,7 @@ def run_intervention(
         resumed_steps: list[dict] = []
         steps_collected: list[dict] = list(pre_intervention_steps)
 
-        remaining_steps = max_steps - (t_star - 1)
-        for t_offset in range(remaining_steps):
+        for t_offset in range(max_steps):
             t = t_star + t_offset
             step_url = env.page.url
             obs_text = obs.get("text", "") if isinstance(obs, dict) else ""
