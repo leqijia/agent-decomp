@@ -181,6 +181,18 @@ def main() -> int:
         help="Rerun existing retryable crash outputs instead of treating them as complete.",
     )
     parser.add_argument(
+        "--max-new-results",
+        type=int,
+        default=None,
+        help="Stop after writing this many new/rerun trajectory files.",
+    )
+    parser.add_argument(
+        "--max-new-cost-usd",
+        type=float,
+        default=None,
+        help="Stop after newly run trajectories report this much OpenRouter cost.",
+    )
+    parser.add_argument(
         "--perfect-retrieval-k", type=int, default=None,
         help="k for the perfect_retrieval policy (only used when --condition=perfect_retrieval).",
     )
@@ -232,6 +244,8 @@ def main() -> int:
         "temperature": args.temperature,
         "thinking": args.thinking,
         "rerun_crashes": args.rerun_crashes,
+        "max_new_results": args.max_new_results,
+        "max_new_cost_usd": args.max_new_cost_usd,
     }
     if args.window_size is not None:
         kwargs["window_size"] = args.window_size

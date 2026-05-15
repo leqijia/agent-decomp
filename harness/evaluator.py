@@ -1014,6 +1014,8 @@ def evaluate_batch(
     *,
     out_dir: str,
     rerun_crashes: bool = False,
+    max_new_results: int | None = None,
+    max_new_cost_usd: float | None = None,
     **kwargs,
 ) -> list[dict]:
     """Run run_episode on all config files for a given condition.
@@ -1023,8 +1025,17 @@ def evaluate_batch(
     """
     results = []
     total = len(config_files)
+    new_results = 0
+    new_cost = 0.0
     out_dir_path = Path(out_dir)
     out_dir_path.mkdir(parents=True, exist_ok=True)
+
+    def limit_reached() -> bool:
+        if max_new_results is not None and new_results >= max_new_results:
+            return True
+        if max_new_cost_usd is not None and new_cost >= max_new_cost_usd:
+            return True
+        return False
 
     for i, cf in enumerate(config_files):
         with open(cf) as f:
@@ -1045,15 +1056,25 @@ def evaluate_batch(
                 continue
             print(f"[{i+1}/{total}] Rerunning task {task_id} (existing retryable crash)")
 
+        if limit_reached():
+            print(
+                f"Stopping early: new_results={new_results}, "
+                f"new_cost=${new_cost:.4f}"
+            )
+            break
+
         print(f"[{i+1}/{total}] Running task {task_id} under condition={condition}")
         try:
             result = run_episode(
                 condition, cf, out_path=str(out_file), **kwargs
             )
+            new_results += 1
+            new_cost += sum((s.get("cost_usd") or 0) for s in result.get("steps", []))
             results.append(result)
         except Exception:
             print(f"  CRASH on task {task_id}")
             traceback.print_exc()
+            new_results += 1
             results.append({
                 "task_id": task_id,
                 "condition": condition,
@@ -1064,6 +1085,7 @@ def evaluate_batch(
                 "tokens_used": 0,
             })
 
+    print(f"Batch new/rerun result files: {new_results}; reported new cost: ${new_cost:.4f}")
     return results
 
 
