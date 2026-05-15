@@ -1,0 +1,1422 @@
+==== run_remaining started 2026-05-13T06:05:12Z ====
+
+=== STAGE PRE: Preflight dependencies, WebArena, and OpenRouter ===
+dependencies: ok
+artifacts: ok (423 raw trajectories, 678 configs, 235 t* oracles)
+webarena sites: ok
+openrouter agent model: ok (qwen/qwen3.5-27b)
+openrouter oracle model: ok (anthropic/claude-sonnet-4.6)
+preflight: ok
+
+=== STAGE 0: Refresh Exp 3 raw manifest from current raw trajectories ===
+Trajectories scanned: 423
+  success:   65
+  failure:   211
+  unscored:  147  (success is null -- crash / evaluator error)
+Pipeline anomalies (skipped.csv): 152
+Bin distribution:
+  <=10            311  (73.5%)
+  11-20            22  (5.2%)
+  21-40            15  (3.5%)
+  41-80            75  (17.7%)
+Stop-reason distribution:
+  agent_stop          135
+  crash               147
+  max_steps            66
+  parse_failures        5
+  repeating_action     70
+
+Wrote manifest to experiments/exp3/raw/manifest.csv
+Wrote results to  experiments/exp3/raw/results.json
+Wrote skipped to  experiments/exp3/raw/skipped.csv
+Condition:     raw
+Experiment:    exp3
+Model:         qwen/qwen3.5-27b
+Tasks scanned: 423
+
+Overall success rate: 0.2355  (95% CI 0.189 - 0.289)  n=276  unscored=147
+Avg tokens/task: 104061.1  (min=0, max=712146)
+Avg eval_score:  0.2355  (n=276)
+
+By length bin:
+  bin               n   success  95% CI
+  <=10            164    0.3720  [0.302, 0.448]
+  11-20            22    0.0455  [0.008, 0.218]
+  21-40            15    0.0667  [0.012, 0.298]
+  41-80            75    0.0267  [0.007, 0.092]
+
+By site:
+  site                n   success  95% CI
+  gitlab             82    0.2073  [0.134, 0.307]
+  multi_site         12    0.0000  [0.000, 0.242]
+  reddit             39    0.4359  [0.293, 0.590]
+  shopping           93    0.2796  [0.199, 0.378]
+  shopping_admin     50    0.1000  [0.043, 0.214]
+
+Stop reasons:
+  crash               147
+  agent_stop          135
+  repeating_action     70
+  max_steps            66
+  parse_failures        5
+
+Wrote metrics to experiments/exp3/raw/metrics.json
+
+=== STAGE 1: Generate t*-specific oracle states for all 4 annotators ===
+=== annotator_1 ===
+  skip 102: already exists at oracle/outputs/tstar/annotator_1/102_tstar.json
+  skip 103: t*=0 (task marked unsolvable-from-start)
+  skip 104: already exists at oracle/outputs/tstar/annotator_1/104_tstar.json
+  skip 114: already exists at oracle/outputs/tstar/annotator_1/114_tstar.json
+  skip 12: already exists at oracle/outputs/tstar/annotator_1/12_tstar.json
+  skip 13: already exists at oracle/outputs/tstar/annotator_1/13_tstar.json
+  skip 142: already exists at oracle/outputs/tstar/annotator_1/142_tstar.json
+  skip 159: already exists at oracle/outputs/tstar/annotator_1/159_tstar.json
+  skip 162: already exists at oracle/outputs/tstar/annotator_1/162_tstar.json
+  skip 169: already exists at oracle/outputs/tstar/annotator_1/169_tstar.json
+  skip 171: already exists at oracle/outputs/tstar/annotator_1/171_tstar.json
+  skip 178: already exists at oracle/outputs/tstar/annotator_1/178_tstar.json
+  skip 181: already exists at oracle/outputs/tstar/annotator_1/181_tstar.json
+  skip 239: already exists at oracle/outputs/tstar/annotator_1/239_tstar.json
+  skip 241: already exists at oracle/outputs/tstar/annotator_1/241_tstar.json
+  skip 27: already exists at oracle/outputs/tstar/annotator_1/27_tstar.json
+  skip 270: already exists at oracle/outputs/tstar/annotator_1/270_tstar.json
+  skip 273: already exists at oracle/outputs/tstar/annotator_1/273_tstar.json
+  skip 277: already exists at oracle/outputs/tstar/annotator_1/277_tstar.json
+  skip 28: already exists at oracle/outputs/tstar/annotator_1/28_tstar.json
+  skip 285: already exists at oracle/outputs/tstar/annotator_1/285_tstar.json
+  skip 309: already exists at oracle/outputs/tstar/annotator_1/309_tstar.json
+  skip 312: already exists at oracle/outputs/tstar/annotator_1/312_tstar.json
+  skip 351: already exists at oracle/outputs/tstar/annotator_1/351_tstar.json
+  skip 352: already exists at oracle/outputs/tstar/annotator_1/352_tstar.json
+  skip 375: already exists at oracle/outputs/tstar/annotator_1/375_tstar.json
+  skip 390: already exists at oracle/outputs/tstar/annotator_1/390_tstar.json
+  skip 393: already exists at oracle/outputs/tstar/annotator_1/393_tstar.json
+  skip 399: already exists at oracle/outputs/tstar/annotator_1/399_tstar.json
+  skip 411: already exists at oracle/outputs/tstar/annotator_1/411_tstar.json
+  skip 412: already exists at oracle/outputs/tstar/annotator_1/412_tstar.json
+  skip 432: already exists at oracle/outputs/tstar/annotator_1/432_tstar.json
+  skip 434: already exists at oracle/outputs/tstar/annotator_1/434_tstar.json
+  skip 442: already exists at oracle/outputs/tstar/annotator_1/442_tstar.json
+  skip 446: already exists at oracle/outputs/tstar/annotator_1/446_tstar.json
+  skip 451: already exists at oracle/outputs/tstar/annotator_1/451_tstar.json
+  skip 454: already exists at oracle/outputs/tstar/annotator_1/454_tstar.json
+  skip 460: already exists at oracle/outputs/tstar/annotator_1/460_tstar.json
+  skip 471: already exists at oracle/outputs/tstar/annotator_1/471_tstar.json
+  skip 473: already exists at oracle/outputs/tstar/annotator_1/473_tstar.json
+  skip 484: already exists at oracle/outputs/tstar/annotator_1/484_tstar.json
+  skip 486: already exists at oracle/outputs/tstar/annotator_1/486_tstar.json
+  skip 489: already exists at oracle/outputs/tstar/annotator_1/489_tstar.json
+  skip 49: already exists at oracle/outputs/tstar/annotator_1/49_tstar.json
+  skip 494: already exists at oracle/outputs/tstar/annotator_1/494_tstar.json
+  skip 496: already exists at oracle/outputs/tstar/annotator_1/496_tstar.json
+  skip 502: already exists at oracle/outputs/tstar/annotator_1/502_tstar.json
+  skip 522: already exists at oracle/outputs/tstar/annotator_1/522_tstar.json
+  skip 528: already exists at oracle/outputs/tstar/annotator_1/528_tstar.json
+  skip 575: already exists at oracle/outputs/tstar/annotator_1/575_tstar.json
+  skip 594: already exists at oracle/outputs/tstar/annotator_1/594_tstar.json
+  skip 615: already exists at oracle/outputs/tstar/annotator_1/615_tstar.json
+  skip 653: already exists at oracle/outputs/tstar/annotator_1/653_tstar.json
+  skip 654: already exists at oracle/outputs/tstar/annotator_1/654_tstar.json
+  skip 655: already exists at oracle/outputs/tstar/annotator_1/655_tstar.json
+  skip 672: already exists at oracle/outputs/tstar/annotator_1/672_tstar.json
+  skip 675: already exists at oracle/outputs/tstar/annotator_1/675_tstar.json
+  skip 682: already exists at oracle/outputs/tstar/annotator_1/682_tstar.json
+  skip 688: already exists at oracle/outputs/tstar/annotator_1/688_tstar.json
+=== annotator_2 ===
+  skip 102: already exists at oracle/outputs/tstar/annotator_2/102_tstar.json
+  skip 103: t*=0 (task marked unsolvable-from-start)
+  skip 104: already exists at oracle/outputs/tstar/annotator_2/104_tstar.json
+  skip 114: already exists at oracle/outputs/tstar/annotator_2/114_tstar.json
+  skip 12: t*=0 (task marked unsolvable-from-start)
+  skip 13: already exists at oracle/outputs/tstar/annotator_2/13_tstar.json
+  skip 142: already exists at oracle/outputs/tstar/annotator_2/142_tstar.json
+  skip 159: already exists at oracle/outputs/tstar/annotator_2/159_tstar.json
+  skip 162: already exists at oracle/outputs/tstar/annotator_2/162_tstar.json
+  skip 169: t*=0 (task marked unsolvable-from-start)
+  skip 171: t*=0 (task marked unsolvable-from-start)
+  skip 178: already exists at oracle/outputs/tstar/annotator_2/178_tstar.json
+  skip 181: already exists at oracle/outputs/tstar/annotator_2/181_tstar.json
+  skip 239: t*=0 (task marked unsolvable-from-start)
+  skip 241: already exists at oracle/outputs/tstar/annotator_2/241_tstar.json
+  skip 27: already exists at oracle/outputs/tstar/annotator_2/27_tstar.json
+  skip 270: already exists at oracle/outputs/tstar/annotator_2/270_tstar.json
+  skip 277: t*=0 (task marked unsolvable-from-start)
+  skip 28: already exists at oracle/outputs/tstar/annotator_2/28_tstar.json
+  skip 285: already exists at oracle/outputs/tstar/annotator_2/285_tstar.json
+  skip 309: t*=0 (task marked unsolvable-from-start)
+  skip 312: already exists at oracle/outputs/tstar/annotator_2/312_tstar.json
+  skip 351: already exists at oracle/outputs/tstar/annotator_2/351_tstar.json
+  skip 352: t*=0 (task marked unsolvable-from-start)
+  skip 375: already exists at oracle/outputs/tstar/annotator_2/375_tstar.json
+  skip 390: already exists at oracle/outputs/tstar/annotator_2/390_tstar.json
+  skip 393: already exists at oracle/outputs/tstar/annotator_2/393_tstar.json
+  skip 399: already exists at oracle/outputs/tstar/annotator_2/399_tstar.json
+  skip 411: already exists at oracle/outputs/tstar/annotator_2/411_tstar.json
+  skip 432: t*=0 (task marked unsolvable-from-start)
+  skip 434: t*=0 (task marked unsolvable-from-start)
+  skip 442: already exists at oracle/outputs/tstar/annotator_2/442_tstar.json
+  skip 446: already exists at oracle/outputs/tstar/annotator_2/446_tstar.json
+  skip 451: already exists at oracle/outputs/tstar/annotator_2/451_tstar.json
+  skip 454: already exists at oracle/outputs/tstar/annotator_2/454_tstar.json
+  skip 460: t*=0 (task marked unsolvable-from-start)
+  skip 471: already exists at oracle/outputs/tstar/annotator_2/471_tstar.json
+  skip 473: already exists at oracle/outputs/tstar/annotator_2/473_tstar.json
+  skip 484: already exists at oracle/outputs/tstar/annotator_2/484_tstar.json
+  skip 486: already exists at oracle/outputs/tstar/annotator_2/486_tstar.json
+  skip 489: already exists at oracle/outputs/tstar/annotator_2/489_tstar.json
+  skip 494: already exists at oracle/outputs/tstar/annotator_2/494_tstar.json
+  skip 496: already exists at oracle/outputs/tstar/annotator_2/496_tstar.json
+  skip 502: already exists at oracle/outputs/tstar/annotator_2/502_tstar.json
+  skip 522: t*=0 (task marked unsolvable-from-start)
+  skip 528: already exists at oracle/outputs/tstar/annotator_2/528_tstar.json
+  skip 575: already exists at oracle/outputs/tstar/annotator_2/575_tstar.json
+  skip 594: already exists at oracle/outputs/tstar/annotator_2/594_tstar.json
+  skip 653: already exists at oracle/outputs/tstar/annotator_2/653_tstar.json
+  skip 654: already exists at oracle/outputs/tstar/annotator_2/654_tstar.json
+  skip 655: already exists at oracle/outputs/tstar/annotator_2/655_tstar.json
+  skip 672: already exists at oracle/outputs/tstar/annotator_2/672_tstar.json
+  skip 675: already exists at oracle/outputs/tstar/annotator_2/675_tstar.json
+  skip 682: already exists at oracle/outputs/tstar/annotator_2/682_tstar.json
+  skip 688: already exists at oracle/outputs/tstar/annotator_2/688_tstar.json
+=== annotator_3 ===
+  skip 102: already exists at oracle/outputs/tstar/annotator_3/102_tstar.json
+  skip 103: already exists at oracle/outputs/tstar/annotator_3/103_tstar.json
+  skip 104: already exists at oracle/outputs/tstar/annotator_3/104_tstar.json
+  skip 114: already exists at oracle/outputs/tstar/annotator_3/114_tstar.json
+  skip 12: already exists at oracle/outputs/tstar/annotator_3/12_tstar.json
+  skip 13: already exists at oracle/outputs/tstar/annotator_3/13_tstar.json
+  skip 142: already exists at oracle/outputs/tstar/annotator_3/142_tstar.json
+  skip 159: already exists at oracle/outputs/tstar/annotator_3/159_tstar.json
+  skip 162: already exists at oracle/outputs/tstar/annotator_3/162_tstar.json
+  skip 169: t*=0 (task marked unsolvable-from-start)
+  skip 171: t*=0 (task marked unsolvable-from-start)
+  skip 178: already exists at oracle/outputs/tstar/annotator_3/178_tstar.json
+  skip 181: already exists at oracle/outputs/tstar/annotator_3/181_tstar.json
+  skip 239: already exists at oracle/outputs/tstar/annotator_3/239_tstar.json
+  skip 241: already exists at oracle/outputs/tstar/annotator_3/241_tstar.json
+  skip 27: already exists at oracle/outputs/tstar/annotator_3/27_tstar.json
+  skip 273: already exists at oracle/outputs/tstar/annotator_3/273_tstar.json
+  skip 28: already exists at oracle/outputs/tstar/annotator_3/28_tstar.json
+  skip 280: already exists at oracle/outputs/tstar/annotator_3/280_tstar.json
+  skip 311: already exists at oracle/outputs/tstar/annotator_3/311_tstar.json
+  skip 317: already exists at oracle/outputs/tstar/annotator_3/317_tstar.json
+  skip 328: already exists at oracle/outputs/tstar/annotator_3/328_tstar.json
+  skip 354: already exists at oracle/outputs/tstar/annotator_3/354_tstar.json
+  skip 388: already exists at oracle/outputs/tstar/annotator_3/388_tstar.json
+  skip 391: already exists at oracle/outputs/tstar/annotator_3/391_tstar.json
+  skip 400: already exists at oracle/outputs/tstar/annotator_3/400_tstar.json
+  skip 413: already exists at oracle/outputs/tstar/annotator_3/413_tstar.json
+  skip 420: already exists at oracle/outputs/tstar/annotator_3/420_tstar.json
+  skip 422: already exists at oracle/outputs/tstar/annotator_3/422_tstar.json
+  skip 433: already exists at oracle/outputs/tstar/annotator_3/433_tstar.json
+  skip 437: already exists at oracle/outputs/tstar/annotator_3/437_tstar.json
+  skip 441: already exists at oracle/outputs/tstar/annotator_3/441_tstar.json
+  skip 443: already exists at oracle/outputs/tstar/annotator_3/443_tstar.json
+  skip 444: already exists at oracle/outputs/tstar/annotator_3/444_tstar.json
+  skip 447: already exists at oracle/outputs/tstar/annotator_3/447_tstar.json
+  skip 458: already exists at oracle/outputs/tstar/annotator_3/458_tstar.json
+  skip 461: already exists at oracle/outputs/tstar/annotator_3/461_tstar.json
+  skip 472: already exists at oracle/outputs/tstar/annotator_3/472_tstar.json
+  skip 481: already exists at oracle/outputs/tstar/annotator_3/481_tstar.json
+  skip 482: already exists at oracle/outputs/tstar/annotator_3/482_tstar.json
+  skip 483: already exists at oracle/outputs/tstar/annotator_3/483_tstar.json
+  skip 487: already exists at oracle/outputs/tstar/annotator_3/487_tstar.json
+  skip 488: already exists at oracle/outputs/tstar/annotator_3/488_tstar.json
+  skip 49: already exists at oracle/outputs/tstar/annotator_3/49_tstar.json
+  skip 492: already exists at oracle/outputs/tstar/annotator_3/492_tstar.json
+  skip 507: already exists at oracle/outputs/tstar/annotator_3/507_tstar.json
+  skip 508: already exists at oracle/outputs/tstar/annotator_3/508_tstar.json
+  skip 509: already exists at oracle/outputs/tstar/annotator_3/509_tstar.json
+  skip 530: already exists at oracle/outputs/tstar/annotator_3/530_tstar.json
+  skip 532: already exists at oracle/outputs/tstar/annotator_3/532_tstar.json
+  skip 534: already exists at oracle/outputs/tstar/annotator_3/534_tstar.json
+  skip 573: already exists at oracle/outputs/tstar/annotator_3/573_tstar.json
+  skip 602: already exists at oracle/outputs/tstar/annotator_3/602_tstar.json
+  skip 656: already exists at oracle/outputs/tstar/annotator_3/656_tstar.json
+  skip 660: already exists at oracle/outputs/tstar/annotator_3/660_tstar.json
+  skip 667: already exists at oracle/outputs/tstar/annotator_3/667_tstar.json
+  skip 681: already exists at oracle/outputs/tstar/annotator_3/681_tstar.json
+=== annotator_4 ===
+  skip 102: already exists at oracle/outputs/tstar/annotator_4/102_tstar.json
+  skip 103: already exists at oracle/outputs/tstar/annotator_4/103_tstar.json
+  skip 104: already exists at oracle/outputs/tstar/annotator_4/104_tstar.json
+  skip 114: already exists at oracle/outputs/tstar/annotator_4/114_tstar.json
+  skip 12: already exists at oracle/outputs/tstar/annotator_4/12_tstar.json
+  skip 13: already exists at oracle/outputs/tstar/annotator_4/13_tstar.json
+  skip 142: already exists at oracle/outputs/tstar/annotator_4/142_tstar.json
+  skip 159: already exists at oracle/outputs/tstar/annotator_4/159_tstar.json
+  skip 162: already exists at oracle/outputs/tstar/annotator_4/162_tstar.json
+  skip 169: already exists at oracle/outputs/tstar/annotator_4/169_tstar.json
+  skip 171: already exists at oracle/outputs/tstar/annotator_4/171_tstar.json
+  skip 178: already exists at oracle/outputs/tstar/annotator_4/178_tstar.json
+  skip 181: already exists at oracle/outputs/tstar/annotator_4/181_tstar.json
+  skip 239: already exists at oracle/outputs/tstar/annotator_4/239_tstar.json
+  skip 241: already exists at oracle/outputs/tstar/annotator_4/241_tstar.json
+  skip 27: already exists at oracle/outputs/tstar/annotator_4/27_tstar.json
+  skip 273: already exists at oracle/outputs/tstar/annotator_4/273_tstar.json
+  skip 28: already exists at oracle/outputs/tstar/annotator_4/28_tstar.json
+  skip 280: already exists at oracle/outputs/tstar/annotator_4/280_tstar.json
+  skip 311: already exists at oracle/outputs/tstar/annotator_4/311_tstar.json
+  skip 391: already exists at oracle/outputs/tstar/annotator_4/391_tstar.json
+  skip 400: already exists at oracle/outputs/tstar/annotator_4/400_tstar.json
+  skip 413: already exists at oracle/outputs/tstar/annotator_4/413_tstar.json
+  skip 420: already exists at oracle/outputs/tstar/annotator_4/420_tstar.json
+  skip 422: already exists at oracle/outputs/tstar/annotator_4/422_tstar.json
+  skip 433: already exists at oracle/outputs/tstar/annotator_4/433_tstar.json
+  skip 437: already exists at oracle/outputs/tstar/annotator_4/437_tstar.json
+  skip 441: already exists at oracle/outputs/tstar/annotator_4/441_tstar.json
+  skip 443: already exists at oracle/outputs/tstar/annotator_4/443_tstar.json
+  skip 444: already exists at oracle/outputs/tstar/annotator_4/444_tstar.json
+  skip 447: already exists at oracle/outputs/tstar/annotator_4/447_tstar.json
+  skip 458: already exists at oracle/outputs/tstar/annotator_4/458_tstar.json
+  skip 461: already exists at oracle/outputs/tstar/annotator_4/461_tstar.json
+  skip 472: already exists at oracle/outputs/tstar/annotator_4/472_tstar.json
+  skip 481: already exists at oracle/outputs/tstar/annotator_4/481_tstar.json
+  skip 482: already exists at oracle/outputs/tstar/annotator_4/482_tstar.json
+  skip 483: already exists at oracle/outputs/tstar/annotator_4/483_tstar.json
+  skip 487: already exists at oracle/outputs/tstar/annotator_4/487_tstar.json
+  skip 488: already exists at oracle/outputs/tstar/annotator_4/488_tstar.json
+  skip 49: already exists at oracle/outputs/tstar/annotator_4/49_tstar.json
+  skip 492: already exists at oracle/outputs/tstar/annotator_4/492_tstar.json
+  skip 507: already exists at oracle/outputs/tstar/annotator_4/507_tstar.json
+  skip 508: already exists at oracle/outputs/tstar/annotator_4/508_tstar.json
+  skip 509: already exists at oracle/outputs/tstar/annotator_4/509_tstar.json
+  skip 530: already exists at oracle/outputs/tstar/annotator_4/530_tstar.json
+  skip 532: already exists at oracle/outputs/tstar/annotator_4/532_tstar.json
+  skip 534: already exists at oracle/outputs/tstar/annotator_4/534_tstar.json
+  skip 573: already exists at oracle/outputs/tstar/annotator_4/573_tstar.json
+  skip 602: already exists at oracle/outputs/tstar/annotator_4/602_tstar.json
+  skip 656: already exists at oracle/outputs/tstar/annotator_4/656_tstar.json
+  skip 660: already exists at oracle/outputs/tstar/annotator_4/660_tstar.json
+  skip 667: already exists at oracle/outputs/tstar/annotator_4/667_tstar.json
+  skip 681: already exists at oracle/outputs/tstar/annotator_4/681_tstar.json
+
+Done. Total API cost this run: $0.0000
+
+=== STAGE 2: Run Exp 1 oracle + env_only at every annotated t* ===
+/home/leqijia/miniconda3/envs/agent-decomp/lib/python3.11/site-packages/beartype/_util/hint/pep/utilpeptest.py:345: BeartypeDecorHintPep585DeprecationWarning: PEP 484 type hint typing.Mapping[str, gymnasium.spaces.space.Space[typing.Any]] deprecated by PEP 585 scheduled for removal in the first Python version released after October 5th, 2025. To resolve this, import this hint from "beartype.typing" rather than "typing". See this discussion for further details and alternatives:
+    https://github.com/beartype/beartype#pep-585-deprecations
+  warn(
+==== run_remaining started 2026-05-13T06:08:08Z ====
+
+=== STAGE PRE: Preflight dependencies, WebArena, and OpenRouter ===
+dependencies: ok
+artifacts: ok (423 raw trajectories, 678 configs, 235 t* oracles)
+webarena sites: ok
+openrouter agent model: ok (qwen/qwen3.5-27b)
+openrouter oracle model: ok (anthropic/claude-sonnet-4.6)
+preflight: ok
+
+=== STAGE 0: Refresh Exp 3 raw manifest from current raw trajectories ===
+Trajectories scanned: 423
+  success:   65
+  failure:   211
+  unscored:  147  (success is null -- crash / evaluator error)
+Pipeline anomalies (skipped.csv): 152
+Bin distribution:
+  <=10            311  (73.5%)
+  11-20            22  (5.2%)
+  21-40            15  (3.5%)
+  41-80            75  (17.7%)
+Stop-reason distribution:
+  agent_stop          135
+  crash               147
+  max_steps            66
+  parse_failures        5
+  repeating_action     70
+
+Wrote manifest to experiments/exp3/raw/manifest.csv
+Wrote results to  experiments/exp3/raw/results.json
+Wrote skipped to  experiments/exp3/raw/skipped.csv
+Condition:     raw
+Experiment:    exp3
+Model:         qwen/qwen3.5-27b
+Tasks scanned: 423
+
+Overall success rate: 0.2355  (95% CI 0.189 - 0.289)  n=276  unscored=147
+Avg tokens/task: 104061.1  (min=0, max=712146)
+Avg eval_score:  0.2355  (n=276)
+
+By length bin:
+  bin               n   success  95% CI
+  <=10            164    0.3720  [0.302, 0.448]
+  11-20            22    0.0455  [0.008, 0.218]
+  21-40            15    0.0667  [0.012, 0.298]
+  41-80            75    0.0267  [0.007, 0.092]
+
+By site:
+  site                n   success  95% CI
+  gitlab             82    0.2073  [0.134, 0.307]
+  multi_site         12    0.0000  [0.000, 0.242]
+  reddit             39    0.4359  [0.293, 0.590]
+  shopping           93    0.2796  [0.199, 0.378]
+  shopping_admin     50    0.1000  [0.043, 0.214]
+
+Stop reasons:
+  crash               147
+  agent_stop          135
+  repeating_action     70
+  max_steps            66
+  parse_failures        5
+
+Wrote metrics to experiments/exp3/raw/metrics.json
+
+=== STAGE 1: Generate t*-specific oracle states for all 4 annotators ===
+=== annotator_1 ===
+  skip 102: already exists at oracle/outputs/tstar/annotator_1/102_tstar.json
+  skip 103: t*=0 (task marked unsolvable-from-start)
+  skip 104: already exists at oracle/outputs/tstar/annotator_1/104_tstar.json
+  skip 114: already exists at oracle/outputs/tstar/annotator_1/114_tstar.json
+  skip 12: already exists at oracle/outputs/tstar/annotator_1/12_tstar.json
+  skip 13: already exists at oracle/outputs/tstar/annotator_1/13_tstar.json
+  skip 142: already exists at oracle/outputs/tstar/annotator_1/142_tstar.json
+  skip 159: already exists at oracle/outputs/tstar/annotator_1/159_tstar.json
+  skip 162: already exists at oracle/outputs/tstar/annotator_1/162_tstar.json
+  skip 169: already exists at oracle/outputs/tstar/annotator_1/169_tstar.json
+  skip 171: already exists at oracle/outputs/tstar/annotator_1/171_tstar.json
+  skip 178: already exists at oracle/outputs/tstar/annotator_1/178_tstar.json
+  skip 181: already exists at oracle/outputs/tstar/annotator_1/181_tstar.json
+  skip 239: already exists at oracle/outputs/tstar/annotator_1/239_tstar.json
+  skip 241: already exists at oracle/outputs/tstar/annotator_1/241_tstar.json
+  skip 27: already exists at oracle/outputs/tstar/annotator_1/27_tstar.json
+  skip 270: already exists at oracle/outputs/tstar/annotator_1/270_tstar.json
+  skip 273: already exists at oracle/outputs/tstar/annotator_1/273_tstar.json
+  skip 277: already exists at oracle/outputs/tstar/annotator_1/277_tstar.json
+  skip 28: already exists at oracle/outputs/tstar/annotator_1/28_tstar.json
+  skip 285: already exists at oracle/outputs/tstar/annotator_1/285_tstar.json
+  skip 309: already exists at oracle/outputs/tstar/annotator_1/309_tstar.json
+  skip 312: already exists at oracle/outputs/tstar/annotator_1/312_tstar.json
+  skip 351: already exists at oracle/outputs/tstar/annotator_1/351_tstar.json
+  skip 352: already exists at oracle/outputs/tstar/annotator_1/352_tstar.json
+  skip 375: already exists at oracle/outputs/tstar/annotator_1/375_tstar.json
+  skip 390: already exists at oracle/outputs/tstar/annotator_1/390_tstar.json
+  skip 393: already exists at oracle/outputs/tstar/annotator_1/393_tstar.json
+  skip 399: already exists at oracle/outputs/tstar/annotator_1/399_tstar.json
+  skip 411: already exists at oracle/outputs/tstar/annotator_1/411_tstar.json
+  skip 412: already exists at oracle/outputs/tstar/annotator_1/412_tstar.json
+  skip 432: already exists at oracle/outputs/tstar/annotator_1/432_tstar.json
+  skip 434: already exists at oracle/outputs/tstar/annotator_1/434_tstar.json
+  skip 442: already exists at oracle/outputs/tstar/annotator_1/442_tstar.json
+  skip 446: already exists at oracle/outputs/tstar/annotator_1/446_tstar.json
+  skip 451: already exists at oracle/outputs/tstar/annotator_1/451_tstar.json
+  skip 454: already exists at oracle/outputs/tstar/annotator_1/454_tstar.json
+  skip 460: already exists at oracle/outputs/tstar/annotator_1/460_tstar.json
+  skip 471: already exists at oracle/outputs/tstar/annotator_1/471_tstar.json
+  skip 473: already exists at oracle/outputs/tstar/annotator_1/473_tstar.json
+  skip 484: already exists at oracle/outputs/tstar/annotator_1/484_tstar.json
+  skip 486: already exists at oracle/outputs/tstar/annotator_1/486_tstar.json
+  skip 489: already exists at oracle/outputs/tstar/annotator_1/489_tstar.json
+  skip 49: already exists at oracle/outputs/tstar/annotator_1/49_tstar.json
+  skip 494: already exists at oracle/outputs/tstar/annotator_1/494_tstar.json
+  skip 496: already exists at oracle/outputs/tstar/annotator_1/496_tstar.json
+  skip 502: already exists at oracle/outputs/tstar/annotator_1/502_tstar.json
+  skip 522: already exists at oracle/outputs/tstar/annotator_1/522_tstar.json
+  skip 528: already exists at oracle/outputs/tstar/annotator_1/528_tstar.json
+  skip 575: already exists at oracle/outputs/tstar/annotator_1/575_tstar.json
+  skip 594: already exists at oracle/outputs/tstar/annotator_1/594_tstar.json
+  skip 615: already exists at oracle/outputs/tstar/annotator_1/615_tstar.json
+  skip 653: already exists at oracle/outputs/tstar/annotator_1/653_tstar.json
+  skip 654: already exists at oracle/outputs/tstar/annotator_1/654_tstar.json
+  skip 655: already exists at oracle/outputs/tstar/annotator_1/655_tstar.json
+  skip 672: already exists at oracle/outputs/tstar/annotator_1/672_tstar.json
+  skip 675: already exists at oracle/outputs/tstar/annotator_1/675_tstar.json
+  skip 682: already exists at oracle/outputs/tstar/annotator_1/682_tstar.json
+  skip 688: already exists at oracle/outputs/tstar/annotator_1/688_tstar.json
+=== annotator_2 ===
+  skip 102: already exists at oracle/outputs/tstar/annotator_2/102_tstar.json
+  skip 103: t*=0 (task marked unsolvable-from-start)
+  skip 104: already exists at oracle/outputs/tstar/annotator_2/104_tstar.json
+  skip 114: already exists at oracle/outputs/tstar/annotator_2/114_tstar.json
+  skip 12: t*=0 (task marked unsolvable-from-start)
+  skip 13: already exists at oracle/outputs/tstar/annotator_2/13_tstar.json
+  skip 142: already exists at oracle/outputs/tstar/annotator_2/142_tstar.json
+  skip 159: already exists at oracle/outputs/tstar/annotator_2/159_tstar.json
+  skip 162: already exists at oracle/outputs/tstar/annotator_2/162_tstar.json
+  skip 169: t*=0 (task marked unsolvable-from-start)
+  skip 171: t*=0 (task marked unsolvable-from-start)
+  skip 178: already exists at oracle/outputs/tstar/annotator_2/178_tstar.json
+  skip 181: already exists at oracle/outputs/tstar/annotator_2/181_tstar.json
+  skip 239: t*=0 (task marked unsolvable-from-start)
+  skip 241: already exists at oracle/outputs/tstar/annotator_2/241_tstar.json
+  skip 27: already exists at oracle/outputs/tstar/annotator_2/27_tstar.json
+  skip 270: already exists at oracle/outputs/tstar/annotator_2/270_tstar.json
+  skip 277: t*=0 (task marked unsolvable-from-start)
+  skip 28: already exists at oracle/outputs/tstar/annotator_2/28_tstar.json
+  skip 285: already exists at oracle/outputs/tstar/annotator_2/285_tstar.json
+  skip 309: t*=0 (task marked unsolvable-from-start)
+  skip 312: already exists at oracle/outputs/tstar/annotator_2/312_tstar.json
+  skip 351: already exists at oracle/outputs/tstar/annotator_2/351_tstar.json
+  skip 352: t*=0 (task marked unsolvable-from-start)
+  skip 375: already exists at oracle/outputs/tstar/annotator_2/375_tstar.json
+  skip 390: already exists at oracle/outputs/tstar/annotator_2/390_tstar.json
+  skip 393: already exists at oracle/outputs/tstar/annotator_2/393_tstar.json
+  skip 399: already exists at oracle/outputs/tstar/annotator_2/399_tstar.json
+  skip 411: already exists at oracle/outputs/tstar/annotator_2/411_tstar.json
+  skip 432: t*=0 (task marked unsolvable-from-start)
+  skip 434: t*=0 (task marked unsolvable-from-start)
+  skip 442: already exists at oracle/outputs/tstar/annotator_2/442_tstar.json
+  skip 446: already exists at oracle/outputs/tstar/annotator_2/446_tstar.json
+  skip 451: already exists at oracle/outputs/tstar/annotator_2/451_tstar.json
+  skip 454: already exists at oracle/outputs/tstar/annotator_2/454_tstar.json
+  skip 460: t*=0 (task marked unsolvable-from-start)
+  skip 471: already exists at oracle/outputs/tstar/annotator_2/471_tstar.json
+  skip 473: already exists at oracle/outputs/tstar/annotator_2/473_tstar.json
+  skip 484: already exists at oracle/outputs/tstar/annotator_2/484_tstar.json
+  skip 486: already exists at oracle/outputs/tstar/annotator_2/486_tstar.json
+  skip 489: already exists at oracle/outputs/tstar/annotator_2/489_tstar.json
+  skip 494: already exists at oracle/outputs/tstar/annotator_2/494_tstar.json
+  skip 496: already exists at oracle/outputs/tstar/annotator_2/496_tstar.json
+  skip 502: already exists at oracle/outputs/tstar/annotator_2/502_tstar.json
+  skip 522: t*=0 (task marked unsolvable-from-start)
+  skip 528: already exists at oracle/outputs/tstar/annotator_2/528_tstar.json
+  skip 575: already exists at oracle/outputs/tstar/annotator_2/575_tstar.json
+  skip 594: already exists at oracle/outputs/tstar/annotator_2/594_tstar.json
+  skip 653: already exists at oracle/outputs/tstar/annotator_2/653_tstar.json
+  skip 654: already exists at oracle/outputs/tstar/annotator_2/654_tstar.json
+  skip 655: already exists at oracle/outputs/tstar/annotator_2/655_tstar.json
+  skip 672: already exists at oracle/outputs/tstar/annotator_2/672_tstar.json
+  skip 675: already exists at oracle/outputs/tstar/annotator_2/675_tstar.json
+  skip 682: already exists at oracle/outputs/tstar/annotator_2/682_tstar.json
+  skip 688: already exists at oracle/outputs/tstar/annotator_2/688_tstar.json
+=== annotator_3 ===
+  skip 102: already exists at oracle/outputs/tstar/annotator_3/102_tstar.json
+  skip 103: already exists at oracle/outputs/tstar/annotator_3/103_tstar.json
+  skip 104: already exists at oracle/outputs/tstar/annotator_3/104_tstar.json
+  skip 114: already exists at oracle/outputs/tstar/annotator_3/114_tstar.json
+  skip 12: already exists at oracle/outputs/tstar/annotator_3/12_tstar.json
+  skip 13: already exists at oracle/outputs/tstar/annotator_3/13_tstar.json
+  skip 142: already exists at oracle/outputs/tstar/annotator_3/142_tstar.json
+  skip 159: already exists at oracle/outputs/tstar/annotator_3/159_tstar.json
+  skip 162: already exists at oracle/outputs/tstar/annotator_3/162_tstar.json
+  skip 169: t*=0 (task marked unsolvable-from-start)
+  skip 171: t*=0 (task marked unsolvable-from-start)
+  skip 178: already exists at oracle/outputs/tstar/annotator_3/178_tstar.json
+  skip 181: already exists at oracle/outputs/tstar/annotator_3/181_tstar.json
+  skip 239: already exists at oracle/outputs/tstar/annotator_3/239_tstar.json
+  skip 241: already exists at oracle/outputs/tstar/annotator_3/241_tstar.json
+  skip 27: already exists at oracle/outputs/tstar/annotator_3/27_tstar.json
+  skip 273: already exists at oracle/outputs/tstar/annotator_3/273_tstar.json
+  skip 28: already exists at oracle/outputs/tstar/annotator_3/28_tstar.json
+  skip 280: already exists at oracle/outputs/tstar/annotator_3/280_tstar.json
+  skip 311: already exists at oracle/outputs/tstar/annotator_3/311_tstar.json
+  skip 317: already exists at oracle/outputs/tstar/annotator_3/317_tstar.json
+  skip 328: already exists at oracle/outputs/tstar/annotator_3/328_tstar.json
+  skip 354: already exists at oracle/outputs/tstar/annotator_3/354_tstar.json
+  skip 388: already exists at oracle/outputs/tstar/annotator_3/388_tstar.json
+  skip 391: already exists at oracle/outputs/tstar/annotator_3/391_tstar.json
+  skip 400: already exists at oracle/outputs/tstar/annotator_3/400_tstar.json
+  skip 413: already exists at oracle/outputs/tstar/annotator_3/413_tstar.json
+  skip 420: already exists at oracle/outputs/tstar/annotator_3/420_tstar.json
+  skip 422: already exists at oracle/outputs/tstar/annotator_3/422_tstar.json
+  skip 433: already exists at oracle/outputs/tstar/annotator_3/433_tstar.json
+  skip 437: already exists at oracle/outputs/tstar/annotator_3/437_tstar.json
+  skip 441: already exists at oracle/outputs/tstar/annotator_3/441_tstar.json
+  skip 443: already exists at oracle/outputs/tstar/annotator_3/443_tstar.json
+  skip 444: already exists at oracle/outputs/tstar/annotator_3/444_tstar.json
+  skip 447: already exists at oracle/outputs/tstar/annotator_3/447_tstar.json
+  skip 458: already exists at oracle/outputs/tstar/annotator_3/458_tstar.json
+  skip 461: already exists at oracle/outputs/tstar/annotator_3/461_tstar.json
+  skip 472: already exists at oracle/outputs/tstar/annotator_3/472_tstar.json
+  skip 481: already exists at oracle/outputs/tstar/annotator_3/481_tstar.json
+  skip 482: already exists at oracle/outputs/tstar/annotator_3/482_tstar.json
+  skip 483: already exists at oracle/outputs/tstar/annotator_3/483_tstar.json
+  skip 487: already exists at oracle/outputs/tstar/annotator_3/487_tstar.json
+  skip 488: already exists at oracle/outputs/tstar/annotator_3/488_tstar.json
+  skip 49: already exists at oracle/outputs/tstar/annotator_3/49_tstar.json
+  skip 492: already exists at oracle/outputs/tstar/annotator_3/492_tstar.json
+  skip 507: already exists at oracle/outputs/tstar/annotator_3/507_tstar.json
+  skip 508: already exists at oracle/outputs/tstar/annotator_3/508_tstar.json
+  skip 509: already exists at oracle/outputs/tstar/annotator_3/509_tstar.json
+  skip 530: already exists at oracle/outputs/tstar/annotator_3/530_tstar.json
+  skip 532: already exists at oracle/outputs/tstar/annotator_3/532_tstar.json
+  skip 534: already exists at oracle/outputs/tstar/annotator_3/534_tstar.json
+  skip 573: already exists at oracle/outputs/tstar/annotator_3/573_tstar.json
+  skip 602: already exists at oracle/outputs/tstar/annotator_3/602_tstar.json
+  skip 656: already exists at oracle/outputs/tstar/annotator_3/656_tstar.json
+  skip 660: already exists at oracle/outputs/tstar/annotator_3/660_tstar.json
+  skip 667: already exists at oracle/outputs/tstar/annotator_3/667_tstar.json
+  skip 681: already exists at oracle/outputs/tstar/annotator_3/681_tstar.json
+=== annotator_4 ===
+  skip 102: already exists at oracle/outputs/tstar/annotator_4/102_tstar.json
+  skip 103: already exists at oracle/outputs/tstar/annotator_4/103_tstar.json
+  skip 104: already exists at oracle/outputs/tstar/annotator_4/104_tstar.json
+  skip 114: already exists at oracle/outputs/tstar/annotator_4/114_tstar.json
+  skip 12: already exists at oracle/outputs/tstar/annotator_4/12_tstar.json
+  skip 13: already exists at oracle/outputs/tstar/annotator_4/13_tstar.json
+  skip 142: already exists at oracle/outputs/tstar/annotator_4/142_tstar.json
+  skip 159: already exists at oracle/outputs/tstar/annotator_4/159_tstar.json
+  skip 162: already exists at oracle/outputs/tstar/annotator_4/162_tstar.json
+  skip 169: already exists at oracle/outputs/tstar/annotator_4/169_tstar.json
+  skip 171: already exists at oracle/outputs/tstar/annotator_4/171_tstar.json
+  skip 178: already exists at oracle/outputs/tstar/annotator_4/178_tstar.json
+  skip 181: already exists at oracle/outputs/tstar/annotator_4/181_tstar.json
+  skip 239: already exists at oracle/outputs/tstar/annotator_4/239_tstar.json
+  skip 241: already exists at oracle/outputs/tstar/annotator_4/241_tstar.json
+  skip 27: already exists at oracle/outputs/tstar/annotator_4/27_tstar.json
+  skip 273: already exists at oracle/outputs/tstar/annotator_4/273_tstar.json
+  skip 28: already exists at oracle/outputs/tstar/annotator_4/28_tstar.json
+  skip 280: already exists at oracle/outputs/tstar/annotator_4/280_tstar.json
+  skip 311: already exists at oracle/outputs/tstar/annotator_4/311_tstar.json
+  skip 391: already exists at oracle/outputs/tstar/annotator_4/391_tstar.json
+  skip 400: already exists at oracle/outputs/tstar/annotator_4/400_tstar.json
+  skip 413: already exists at oracle/outputs/tstar/annotator_4/413_tstar.json
+  skip 420: already exists at oracle/outputs/tstar/annotator_4/420_tstar.json
+  skip 422: already exists at oracle/outputs/tstar/annotator_4/422_tstar.json
+  skip 433: already exists at oracle/outputs/tstar/annotator_4/433_tstar.json
+  skip 437: already exists at oracle/outputs/tstar/annotator_4/437_tstar.json
+  skip 441: already exists at oracle/outputs/tstar/annotator_4/441_tstar.json
+  skip 443: already exists at oracle/outputs/tstar/annotator_4/443_tstar.json
+  skip 444: already exists at oracle/outputs/tstar/annotator_4/444_tstar.json
+  skip 447: already exists at oracle/outputs/tstar/annotator_4/447_tstar.json
+  skip 458: already exists at oracle/outputs/tstar/annotator_4/458_tstar.json
+  skip 461: already exists at oracle/outputs/tstar/annotator_4/461_tstar.json
+  skip 472: already exists at oracle/outputs/tstar/annotator_4/472_tstar.json
+  skip 481: already exists at oracle/outputs/tstar/annotator_4/481_tstar.json
+  skip 482: already exists at oracle/outputs/tstar/annotator_4/482_tstar.json
+  skip 483: already exists at oracle/outputs/tstar/annotator_4/483_tstar.json
+  skip 487: already exists at oracle/outputs/tstar/annotator_4/487_tstar.json
+  skip 488: already exists at oracle/outputs/tstar/annotator_4/488_tstar.json
+  skip 49: already exists at oracle/outputs/tstar/annotator_4/49_tstar.json
+  skip 492: already exists at oracle/outputs/tstar/annotator_4/492_tstar.json
+  skip 507: already exists at oracle/outputs/tstar/annotator_4/507_tstar.json
+  skip 508: already exists at oracle/outputs/tstar/annotator_4/508_tstar.json
+  skip 509: already exists at oracle/outputs/tstar/annotator_4/509_tstar.json
+  skip 530: already exists at oracle/outputs/tstar/annotator_4/530_tstar.json
+  skip 532: already exists at oracle/outputs/tstar/annotator_4/532_tstar.json
+  skip 534: already exists at oracle/outputs/tstar/annotator_4/534_tstar.json
+  skip 573: already exists at oracle/outputs/tstar/annotator_4/573_tstar.json
+  skip 602: already exists at oracle/outputs/tstar/annotator_4/602_tstar.json
+  skip 656: already exists at oracle/outputs/tstar/annotator_4/656_tstar.json
+  skip 660: already exists at oracle/outputs/tstar/annotator_4/660_tstar.json
+  skip 667: already exists at oracle/outputs/tstar/annotator_4/667_tstar.json
+  skip 681: already exists at oracle/outputs/tstar/annotator_4/681_tstar.json
+
+Done. Total API cost this run: $0.0000
+
+=== STAGE 2: Run Exp 1 oracle + env_only at every annotated t* ===
+/home/leqijia/miniconda3/envs/agent-decomp/lib/python3.11/site-packages/beartype/_util/hint/pep/utilpeptest.py:345: BeartypeDecorHintPep585DeprecationWarning: PEP 484 type hint typing.Mapping[str, gymnasium.spaces.space.Space[typing.Any]] deprecated by PEP 585 scheduled for removal in the first Python version released after October 5th, 2025. To resolve this, import this hint from "beartype.typing" rather than "typing". See this discussion for further details and alternatives:
+    https://github.com/beartype/beartype#pep-585-deprecations
+  warn(
+Found 209 annotation entries
+Running 102 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=agent_stop | steps=8 | success=False
+  => success=False stop=agent_stop
+Running 102 t*=3 ENV ONLY
+  => env_only t*=3 stop=agent_stop | steps=13 | success=False
+  => success=False stop=agent_stop
+Running 104 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=agent_stop | steps=5 | success=True
+  => success=True stop=agent_stop
+Running 104 t*=4 ENV ONLY
+  => env_only t*=4 stop=agent_stop | steps=6 | success=False
+  => success=False stop=agent_stop
+Running 114 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=agent_stop | steps=23 | success=False
+  => success=False stop=agent_stop
+Running 114 t*=5 ENV ONLY
+  => env_only t*=5 stop=crash | steps=53 | success=None
+  => success=None stop=crash
+Running 12 t*=6 FULL ORACLE
+  => oracle_intervention t*=6 stop=crash | steps=6 | success=None
+  => success=None stop=crash
+Running 12 t*=6 ENV ONLY
+  => env_only t*=6 stop=crash | steps=6 | success=None
+  => success=None stop=crash
+Running 13 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 13 t*=5 ENV ONLY
+  => env_only t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 142 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 142 t*=5 ENV ONLY
+  => env_only t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 159 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 159 t*=5 ENV ONLY
+  => env_only t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 162 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 162 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 169 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 169 t*=1 ENV ONLY
+  => env_only t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 171 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 171 t*=1 ENV ONLY
+  => env_only t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 178 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 178 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 181 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 181 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 239 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 239 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 241 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 241 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 27 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 27 t*=5 ENV ONLY
+  => env_only t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 270 t*=8 FULL ORACLE
+  => oracle_intervention t*=8 stop=crash | steps=8 | success=None
+  => success=None stop=crash
+Running 270 t*=8 ENV ONLY
+  => env_only t*=8 stop=crash | steps=8 | success=None
+  => success=None stop=crash
+Running 273 t*=6 FULL ORACLE
+  => oracle_intervention t*=6 stop=crash | steps=6 | success=None
+  => success=None stop=crash
+Running 273 t*=6 ENV ONLY
+  => env_only t*=6 stop=crash | steps=6 | success=None
+  => success=None stop=crash
+Running 277 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 277 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 28 t*=7 FULL ORACLE
+  => oracle_intervention t*=7 stop=crash | steps=7 | success=None
+  => success=None stop=crash
+Running 28 t*=7 ENV ONLY
+  => env_only t*=7 stop=crash | steps=7 | success=None
+  => success=None stop=crash
+Running 285 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 285 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 309 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 309 t*=1 ENV ONLY
+  => env_only t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 312 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 312 t*=5 ENV ONLY
+  => env_only t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 351 t*=14 FULL ORACLE
+  => oracle_intervention t*=14 stop=crash | steps=14 | success=None
+  => success=None stop=crash
+Running 351 t*=14 ENV ONLY
+  => env_only t*=14 stop=crash | steps=14 | success=None
+  => success=None stop=crash
+Running 352 t*=18 FULL ORACLE
+  => oracle_intervention t*=18 stop=crash | steps=18 | success=None
+  => success=None stop=crash
+Running 352 t*=18 ENV ONLY
+  => env_only t*=18 stop=crash | steps=18 | success=None
+  => success=None stop=crash
+Running 375 t*=6 FULL ORACLE
+  => oracle_intervention t*=6 stop=crash | steps=6 | success=None
+  => success=None stop=crash
+Running 375 t*=6 ENV ONLY
+  => env_only t*=6 stop=crash | steps=6 | success=None
+  => success=None stop=crash
+Running 390 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 390 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 393 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 393 t*=5 ENV ONLY
+  => env_only t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 399 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 399 t*=3 ENV ONLY
+  => env_only t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 411 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 411 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 412 t*=31 FULL ORACLE
+  => oracle_intervention t*=31 stop=crash | steps=31 | success=None
+  => success=None stop=crash
+Running 412 t*=31 ENV ONLY
+  => env_only t*=31 stop=crash | steps=31 | success=None
+  => success=None stop=crash
+Running 432 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 432 t*=1 ENV ONLY
+  => env_only t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 434 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 434 t*=1 ENV ONLY
+  => env_only t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 442 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 442 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 446 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 446 t*=5 ENV ONLY
+  => env_only t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 451 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 451 t*=3 ENV ONLY
+  => env_only t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 454 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 454 t*=3 ENV ONLY
+  => env_only t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 460 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 460 t*=1 ENV ONLY
+  => env_only t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 471 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 471 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 473 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 473 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 484 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 484 t*=3 ENV ONLY
+  => env_only t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 486 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 486 t*=3 ENV ONLY
+  => env_only t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 489 t*=6 FULL ORACLE
+  => oracle_intervention t*=6 stop=crash | steps=6 | success=None
+  => success=None stop=crash
+Running 489 t*=6 ENV ONLY
+  => env_only t*=6 stop=crash | steps=6 | success=None
+  => success=None stop=crash
+Running 49 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 49 t*=5 ENV ONLY
+  => env_only t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 494 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 494 t*=5 ENV ONLY
+  => env_only t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 496 t*=6 FULL ORACLE
+  => oracle_intervention t*=6 stop=crash | steps=6 | success=None
+  => success=None stop=crash
+Running 496 t*=6 ENV ONLY
+  => env_only t*=6 stop=crash | steps=6 | success=None
+  => success=None stop=crash
+Running 502 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 502 t*=5 ENV ONLY
+  => env_only t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 522 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 522 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 528 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 528 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 575 t*=7 FULL ORACLE
+  => oracle_intervention t*=7 stop=crash | steps=7 | success=None
+  => success=None stop=crash
+Running 575 t*=7 ENV ONLY
+  => env_only t*=7 stop=crash | steps=7 | success=None
+  => success=None stop=crash
+Running 594 t*=8 FULL ORACLE
+  => oracle_intervention t*=8 stop=crash | steps=8 | success=None
+  => success=None stop=crash
+Running 594 t*=8 ENV ONLY
+  => env_only t*=8 stop=crash | steps=8 | success=None
+  => success=None stop=crash
+Running 615 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 615 t*=5 ENV ONLY
+  => env_only t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 653 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 653 t*=3 ENV ONLY
+  => env_only t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 654 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 654 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 655 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 655 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 672 t*=6 FULL ORACLE
+  => oracle_intervention t*=6 stop=crash | steps=6 | success=None
+  => success=None stop=crash
+Running 672 t*=6 ENV ONLY
+  => env_only t*=6 stop=crash | steps=6 | success=None
+  => success=None stop=crash
+Running 675 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 675 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 682 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 682 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 688 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 688 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 102 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 102 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 104 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 104 t*=1 ENV ONLY
+  => env_only t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 114 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 114 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 13 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 13 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 142 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 142 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 159 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 159 t*=1 ENV ONLY
+  => env_only t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 162 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 162 t*=1 ENV ONLY
+  => env_only t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 178 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 178 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 181 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 181 t*=3 ENV ONLY
+  => env_only t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 241 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 241 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 27 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 27 t*=5 ENV ONLY
+  => env_only t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 270 t*=8 FULL ORACLE
+  => oracle_intervention t*=8 stop=crash | steps=8 | success=None
+  => success=None stop=crash
+Running 270 t*=8 ENV ONLY
+  => env_only t*=8 stop=crash | steps=8 | success=None
+  => success=None stop=crash
+Running 28 t*=6 FULL ORACLE
+  => oracle_intervention t*=6 stop=crash | steps=6 | success=None
+  => success=None stop=crash
+Running 28 t*=6 ENV ONLY
+  => env_only t*=6 stop=crash | steps=6 | success=None
+  => success=None stop=crash
+Running 285 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 285 t*=1 ENV ONLY
+  => env_only t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 312 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 312 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 351 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 351 t*=1 ENV ONLY
+  => env_only t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 375 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 375 t*=5 ENV ONLY
+  => env_only t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 390 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 390 t*=3 ENV ONLY
+  => env_only t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 393 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 393 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 399 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 399 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 411 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 411 t*=3 ENV ONLY
+  => env_only t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 442 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 442 t*=1 ENV ONLY
+  => env_only t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 446 t*=10 FULL ORACLE
+  => oracle_intervention t*=10 stop=crash | steps=10 | success=None
+  => success=None stop=crash
+Running 446 t*=10 ENV ONLY
+  => env_only t*=10 stop=crash | steps=10 | success=None
+  => success=None stop=crash
+Running 451 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 451 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 454 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 454 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 471 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 471 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 473 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 473 t*=3 ENV ONLY
+  => env_only t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 484 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 484 t*=3 ENV ONLY
+  => env_only t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 486 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 486 t*=1 ENV ONLY
+  => env_only t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 489 t*=7 FULL ORACLE
+  => oracle_intervention t*=7 stop=crash | steps=7 | success=None
+  => success=None stop=crash
+Running 489 t*=7 ENV ONLY
+  => env_only t*=7 stop=crash | steps=7 | success=None
+  => success=None stop=crash
+Running 494 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 494 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 496 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 496 t*=5 ENV ONLY
+  => env_only t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 502 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 502 t*=3 ENV ONLY
+  => env_only t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 528 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 528 t*=3 ENV ONLY
+  => env_only t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 575 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 575 t*=5 ENV ONLY
+  => env_only t*=5 stop=crash | steps=5 | success=None
+  => success=None stop=crash
+Running 594 t*=6 FULL ORACLE
+  => oracle_intervention t*=6 stop=crash | steps=6 | success=None
+  => success=None stop=crash
+Running 594 t*=6 ENV ONLY
+  => env_only t*=6 stop=crash | steps=6 | success=None
+  => success=None stop=crash
+Running 653 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 653 t*=3 ENV ONLY
+  => env_only t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 654 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 654 t*=1 ENV ONLY
+  => env_only t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 655 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 655 t*=1 ENV ONLY
+  => env_only t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 672 t*=25 FULL ORACLE
+  => oracle_intervention t*=25 stop=crash | steps=25 | success=None
+  => success=None stop=crash
+Running 672 t*=25 ENV ONLY
+  => env_only t*=25 stop=crash | steps=25 | success=None
+  => success=None stop=crash
+Running 675 t*=8 FULL ORACLE
+  => oracle_intervention t*=8 stop=crash | steps=8 | success=None
+  => success=None stop=crash
+Running 675 t*=8 ENV ONLY
+  => env_only t*=8 stop=crash | steps=8 | success=None
+  => success=None stop=crash
+Running 682 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 682 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 688 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 688 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=4 | success=None
+  => success=None stop=crash
+Running 102 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 102 t*=3 ENV ONLY
+  => env_only t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 103 t*=8 FULL ORACLE
+  => oracle_intervention t*=8 stop=crash | steps=8 | success=None
+  => success=None stop=crash
+Running 103 t*=8 ENV ONLY
+  => env_only t*=8 stop=crash | steps=8 | success=None
+  => success=None stop=crash
+Running 104 t*=13 FULL ORACLE
+  => oracle_intervention t*=13 stop=crash | steps=13 | success=None
+  => success=None stop=crash
+Running 104 t*=13 ENV ONLY
+  => env_only t*=13 stop=crash | steps=13 | success=None
+  => success=None stop=crash
+Running 114 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 114 t*=1 ENV ONLY
+  => env_only t*=1 stop=crash | steps=1 | success=None
+  => success=None stop=crash
+Running 12 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 12 t*=3 ENV ONLY
+  => env_only t*=3 stop=crash | steps=3 | success=None
+  => success=None stop=crash
+Running 13 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 13 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 142 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 142 t*=2 ENV ONLY
+  => env_only t*=2 stop=crash | steps=2 | success=None
+  => success=None stop=crash
+Running 159 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=agent_stop | steps=4 | success=False
+  => success=False stop=agent_stop
+Running 159 t*=2 ENV ONLY
+  => env_only t*=2 stop=agent_stop | steps=4 | success=False
+  => success=False stop=agent_stop
+Running 162 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=agent_stop | steps=4 | success=False
+  => success=False stop=agent_stop
+Running 162 t*=2 ENV ONLY
+  => env_only t*=2 stop=agent_stop | steps=4 | success=False
+  => success=False stop=agent_stop
+Running 178 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=max_steps | steps=75 | success=False
+  => success=False stop=max_steps
+Running 178 t*=3 ENV ONLY
+  => env_only t*=3 stop=max_steps | steps=75 | success=False
+  => success=False stop=max_steps
+Running 181 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=agent_stop | steps=7 | success=False
+  => success=False stop=agent_stop
+Running 181 t*=4 ENV ONLY
+  => env_only t*=4 stop=agent_stop | steps=7 | success=False
+  => success=False stop=agent_stop
+Running 239 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=agent_stop | steps=29 | success=False
+  => success=False stop=agent_stop
+Running 239 t*=1 ENV ONLY
+  => env_only t*=1 stop=repeating_action | steps=5 | success=False
+  => success=False stop=repeating_action
+Running 241 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=crash | steps=50 | success=None
+  => success=None stop=crash
+Running 241 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=30 | success=None
+  => success=None stop=crash
+Running 27 t*=1 FULL ORACLE
+  => oracle_intervention t*=1 stop=agent_stop | steps=7 | success=True
+  => success=True stop=agent_stop
+Running 27 t*=1 ENV ONLY
+  => env_only t*=1 stop=agent_stop | steps=7 | success=True
+  => success=True stop=agent_stop
+Running 273 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=agent_stop | steps=7 | success=False
+  => success=False stop=agent_stop
+Running 273 t*=2 ENV ONLY
+  => env_only t*=2 stop=repeating_action | steps=16 | success=False
+  => success=False stop=repeating_action
+Running 28 t*=7 FULL ORACLE
+  => oracle_intervention t*=7 stop=repeating_action | steps=10 | success=False
+  => success=False stop=repeating_action
+Running 28 t*=7 ENV ONLY
+  => env_only t*=7 stop=repeating_action | steps=15 | success=False
+  => success=False stop=repeating_action
+Running 280 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=agent_stop | steps=4 | success=False
+  => success=False stop=agent_stop
+Running 280 t*=3 ENV ONLY
+  => env_only t*=3 stop=agent_stop | steps=4 | success=False
+  => success=False stop=agent_stop
+Running 311 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=agent_stop | steps=5 | success=False
+  => success=False stop=agent_stop
+Running 311 t*=5 ENV ONLY
+  => env_only t*=5 stop=agent_stop | steps=9 | success=False
+  => success=False stop=agent_stop
+Running 317 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=agent_stop | steps=5 | success=False
+  => success=False stop=agent_stop
+Running 317 t*=5 ENV ONLY
+  => env_only t*=5 stop=agent_stop | steps=9 | success=False
+  => success=False stop=agent_stop
+Running 328 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=53 | success=None
+  => success=None stop=crash
+Running 328 t*=3 ENV ONLY
+  => env_only t*=3 stop=agent_stop | steps=5 | success=False
+  => success=False stop=agent_stop
+Running 354 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=crash | steps=66 | success=None
+  => success=None stop=crash
+Running 354 t*=3 ENV ONLY
+  => env_only t*=3 stop=repeating_action | steps=7 | success=False
+  => success=False stop=repeating_action
+Running 388 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=agent_stop | steps=7 | success=True
+  => success=True stop=agent_stop
+Running 388 t*=3 ENV ONLY
+  => env_only t*=3 stop=agent_stop | steps=7 | success=True
+  => success=True stop=agent_stop
+Running 391 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=max_steps | steps=75 | success=False
+  => success=False stop=max_steps
+Running 391 t*=5 ENV ONLY
+  => env_only t*=5 stop=repeating_action | steps=7 | success=False
+  => success=False stop=repeating_action
+Running 400 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=repeating_action | steps=7 | success=False
+  => success=False stop=repeating_action
+Running 400 t*=3 ENV ONLY
+  => env_only t*=3 stop=repeating_action | steps=7 | success=False
+  => success=False stop=repeating_action
+Running 413 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=agent_stop | steps=46 | success=False
+  => success=False stop=agent_stop
+Running 413 t*=3 ENV ONLY
+  => env_only t*=3 stop=agent_stop | steps=25 | success=False
+  => success=False stop=agent_stop
+Running 420 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=agent_stop | steps=50 | success=False
+  => success=False stop=agent_stop
+Running 420 t*=3 ENV ONLY
+  => env_only t*=3 stop=agent_stop | steps=9 | success=False
+  => success=False stop=agent_stop
+Running 422 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=agent_stop | steps=63 | success=False
+  => success=False stop=agent_stop
+Running 422 t*=3 ENV ONLY
+  => env_only t*=3 stop=repeating_action | steps=39 | success=False
+  => success=False stop=repeating_action
+Running 433 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=agent_stop | steps=4 | success=True
+  => success=True stop=agent_stop
+Running 433 t*=3 ENV ONLY
+  => env_only t*=3 stop=agent_stop | steps=4 | success=True
+  => success=True stop=agent_stop
+Running 437 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=agent_stop | steps=4 | success=False
+  => success=False stop=agent_stop
+Running 437 t*=4 ENV ONLY
+  => env_only t*=4 stop=agent_stop | steps=9 | success=False
+  => success=False stop=agent_stop
+Running 441 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=agent_stop | steps=10 | success=False
+  => success=False stop=agent_stop
+Running 441 t*=4 ENV ONLY
+  => env_only t*=4 stop=agent_stop | steps=60 | success=False
+  => success=False stop=agent_stop
+Running 443 t*=2 FULL ORACLE
+  => oracle_intervention t*=2 stop=repeating_action | steps=4 | success=False
+  => success=False stop=repeating_action
+Running 443 t*=2 ENV ONLY
+  => env_only t*=2 stop=max_steps | steps=75 | success=False
+  => success=False stop=max_steps
+Running 444 t*=6 FULL ORACLE
+  => oracle_intervention t*=6 stop=agent_stop | steps=8 | success=False
+  => success=False stop=agent_stop
+Running 444 t*=6 ENV ONLY
+  => env_only t*=6 stop=agent_stop | steps=15 | success=False
+  => success=False stop=agent_stop
+Running 447 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=agent_stop | steps=6 | success=False
+  => success=False stop=agent_stop
+Running 447 t*=5 ENV ONLY
+  => env_only t*=5 stop=repeating_action | steps=7 | success=False
+  => success=False stop=repeating_action
+Running 458 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=agent_stop | steps=12 | success=False
+  => success=False stop=agent_stop
+Running 458 t*=4 ENV ONLY
+  => env_only t*=4 stop=crash | steps=39 | success=None
+  => success=None stop=crash
+Running 461 t*=4 FULL ORACLE
+  => oracle_intervention t*=4 stop=max_steps | steps=75 | success=False
+  => success=False stop=max_steps
+Running 461 t*=4 ENV ONLY
+  => env_only t*=4 stop=agent_stop | steps=16 | success=False
+  => success=False stop=agent_stop
+Running 472 t*=3 FULL ORACLE
+  => oracle_intervention t*=3 stop=max_steps | steps=75 | success=False
+  => success=False stop=max_steps
+Running 472 t*=3 ENV ONLY
+  => env_only t*=3 stop=agent_stop | steps=19 | success=True

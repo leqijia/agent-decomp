@@ -1,0 +1,19 @@
+Found 97 annotation entries (mode=primary)
+SKIP 102 oracle already done
+SKIP 102 envonly already done
+SKIP 114 oracle already done
+SKIP 114 envonly already done
+SKIP 12 oracle already done
+Running 12 t*=6 ENV ONLY
+  => env_only t*=6 stop=agent_stop | steps=24 | success=False
+  => success=False stop=agent_stop
+Running 13 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=max_steps | steps=50 | success=False
+  => success=False stop=max_steps
+Running 13 t*=5 ENV ONLY
+  => env_only t*=5 stop=agent_stop | steps=24 | success=True
+  => success=True stop=agent_stop
+Running 142 t*=5 FULL ORACLE
+  => oracle_intervention t*=5 stop=repeating_action | steps=42 | success=False
+  => success=False stop=repeating_action
+Done. New/rerun result files: 4; reported new cost: $0.2041

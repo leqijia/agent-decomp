@@ -10,7 +10,7 @@
   "agent_variant": "env_only",
   "observation_type": "accessibility_tree",
   "action_set_tag": "id_accessibility_tree",
-  "max_steps": 75,
+  "max_steps": 50,
   "temperature": 0.0,
   "max_obs_length": 4096,
   "intervention": {
@@ -18,24 +18,54 @@
     "source_trajectory": "trajectories/data/602.json",
     "env_only": true
   },
-  "started_at": "2026-05-02T05:44:07Z",
-  "ended_at": "2026-05-02T05:44:17Z",
-  "total_steps": 4,
-  "stop_reason": "crash",
-  "success": null,
-  "eval_score": null,
+  "started_at": "2026-05-14T04:55:55Z",
+  "ended_at": "2026-05-14T04:56:38Z",
+  "total_steps": 6,
+  "stop_reason": "agent_stop",
+  "success": false,
+  "eval_score": 0.0,
   "steps": [
     {
       "t": 4,
-      "url": "http://172.185.52.29:9999/",
-      "observation": "Tab 0 (current): Postmill\n\n[36] RootWebArea 'Postmill' focused: True url: http://172.185.52.29:9999/\n\t[62] link 'Jump to main content' url: http://172.185.52.29:9999/#main\n\t\t\t[-1000000057] InlineTextBox 'Jump to main content'\n\t[63] link 'Jump to sidebar' url: http://172.185.52.29:9999/#sidebar\n\t\t\t[-1000000058] InlineTextBox 'Jump to sidebar'\n\t[66] sectionheader ''\n\t\t[67] link 'Home' url: http://172.185.52.29:9999/\n\t\t\t[13] StaticText 'Postmill'\n\t\t\t\t[-1000000043] InlineTextBox 'Postmill'\n\t[81] link 'Forums' url: http://172.185.52.29:9999/forums\n\t\t\t[-1000000044] InlineTextBox 'Forums'\n\t[83] link 'Wiki' url: http://172.185.52.29:9999/wiki\n\t\t\t[-1000000045] InlineTextBox 'Wiki'\n\t[95] searchbox 'Search query'\n\t[102] link 'Notifications (0)' url: http://172.185.52.29:9999/notifications\n\t\t[105] image ''\n\t[108] link 'Submit' url: http://172.185.52.29:9999/submit\n\t\t[111] image ''\n\t\t\t[-1000000046] InlineTextBox 'Submit'\n\t[115] button 'MarvelsGrantMan136' hasPopup: menu expanded: False\n\t\t[118] image ''\n\t\t\t[-1000000047] InlineTextBox 'MarvelsGrantMan136'\n\t[168] main ''\n\t\t[172] link 'Submissions' url: http://172.185.52.29:9999/\n\t\t\t\t[-1000000048] InlineTextBox 'Submissions'\n\t\t[174] link 'Comments' url: http://172.185.52.29:9999/comments\n\t\t\t\t[-1000000049] InlineTextBox 'Comments'\n\t\t[177] button 'Filter on: Subscribed' hasPopup: menu expanded: False\n\t\t\t[179] image ''\n\t\t\t\t[-1000000050] InlineTextBox 'Subscribed'\n\t\t[193] button 'Sort by: Hot' hasPopup: menu expanded: False\n\t\t\t[195] image ''\n\t\t\t\t[-1000000051] InlineTextBox 'Hot'\n\t[212] complementary ''\n\t\t[214] heading 'Subscribed forums'\n\t\t\t\t[-1000000052] InlineTextBox 'Subscribed forums'\n\t\t[217] link 'Cyberpunk' url: http://172.185.52.29:9999/f/Cyberpunk\n\t\t\t\t[-1000000053] InlineTextBox 'Cyberpunk'\n\t\t[219] link 'sci_fi' url: http://172.185.52.29:9999/f/sci_fi\n\t\t\t\t[-1000000054] InlineTextBox 'sci_fi'\n\t[220] contentinfo ''\n\t\t[32] StaticText 'Running '\n\t\t\t[-1000000055] InlineTextBox 'Running '\n\t\t[223] link 'Postmill' url: https://postmill.xyz/\n\t\t\t\t[-1000000056] InlineTextBox 'Postmill'",
-      "thought": "",
-      "raw_prediction": "[API_ERROR] OpenRouter returned 403: {\"error\":{\"message\":\"Key limit exceeded (total limit). Manage it using https://openrouter.ai/settings/keys\",\"code\":403}}",
-      "action": "",
-      "parse_error": "api_error",
-      "prompt_tokens": null,
-      "completion_tokens": null,
-      "latency_ms": 0
+      "url": "http://172.185.52.29:9999/submit/AskReddit",
+      "observation": "Tab 0 (current): Create submission\n\n[2958] RootWebArea 'Create submission' focused: True\n\t[2990] link 'Jump to main content'\n\t[2991] link 'Jump to sidebar'\n\t[2998] HeaderAsNonLandmark ''\n\t\t[2999] link 'Home'\n\t\t\t[3034] StaticText 'Postmill'\n\t[3035] link 'Forums'\n\t[3036] link 'Wiki'\n\t[3044] searchbox 'Search query'\n\t[3045] link 'Notifications (0)'\n\t[3046] link 'Submit'\n\t[2969] button 'MarvelsGrantMan136' hasPopup: menu expanded: False\n\t[2976] main ''\n\t\t[2992] heading 'Create submission'\n\t\t[3054] radio 'URL' checked: true\n\t\t[3056] radio 'Image' checked: false\n\t\t[3327] textbox '' required: False\n\t\t[3064] StaticText 'Title '\n\t\t[3066] StaticText '*'\n\t\t[3063] textbox 'Title *' required: True\n\t\t[3072] StaticText 'Body'\n\t\t[3073] textbox 'Body' required: False describedby: submission_body_help\n\t\t[3075] checkbox 'Formatting help +' checked: false\n\t\t[3077] StaticText 'Markdown allowed.'\n\t\t[3081] StaticText 'Forum '\n\t\t[3536] StaticText '*'\n\t\t[2984] combobox 'AskReddit' hasPopup: menu required: False expanded: False\n\t\t\t[2986] textbox 'AskReddit' required: False\n\t\t[3192] button 'Create submission'\n\t[2971] complementary ''\n\t\t[3021] heading 'AskReddit'\n\t\t\t[3196] link 'AskReddit'\n\t\t[3538] button 'Subscribe No subscribers'\n\t\t\t[3540] generic 'No subscribers'\n\t\t[3201] StaticText 't5_2qh1i'\n\t\t[3024] separator '' orientation: horizontal\n\t\t[3545] StaticText 'Created '\n\t\t[3546] time 'September 30, 2022 at 8:39:16 PM EDT'\n\t\t\t[3567] StaticText '4 years ago'\n\t\t[3547] link 'Subscribe via RSS'\n\t\t[2972] Details ''\n\t\t\t[2974] DisclosureTriangle 'Hide this forum' expanded: False\n\t\t[3027] heading 'Toolbox'\n\t\t[3549] link 'Bans'\n\t\t[3550] link 'Moderation log'\n\t[2989] contentinfo ''\n\t\t[3030] StaticText 'Running '\n\t\t[3031] link 'Postmill'",
+      "thought": "Let's think step-by-step. I'm on the submission page for AskReddit. I need to post my question about driving places in Pittsburgh. I should fill in the title field [3063] with my question first.",
+      "raw_prediction": "Let's think step-by-step. I'm on the submission page for AskReddit. I need to post my question about driving places in Pittsburgh. I should fill in the title field [3063] with my question first. In summary, the next action I will perform is ```type [3063] [places for new drivers to learn driving in pittsburgh] [0]```",
+      "action": "type [3063] [places for new drivers to learn driving in pittsburgh] [0]",
+      "parse_error": null,
+      "prompt_tokens": 2336,
+      "completion_tokens": 275,
+      "latency_ms": 4144,
+      "cost_usd": 0.00088452,
+      "is_intervention": true
+    },
+    {
+      "t": 5,
+      "url": "http://172.185.52.29:9999/submit/AskReddit",
+      "observation": "Tab 0 (current): Create submission\n\n[2958] RootWebArea 'Create submission' focused: True\n\t[2990] link 'Jump to main content'\n\t[2991] link 'Jump to sidebar'\n\t[2998] HeaderAsNonLandmark ''\n\t\t[2999] link 'Home'\n\t\t\t[3034] StaticText 'Postmill'\n\t[3035] link 'Forums'\n\t[3036] link 'Wiki'\n\t[3044] searchbox 'Search query'\n\t[3045] link 'Notifications (0)'\n\t[3046] link 'Submit'\n\t[2969] button 'MarvelsGrantMan136' hasPopup: menu expanded: False\n\t[2976] main ''\n\t\t[2992] heading 'Create submission'\n\t\t[3054] radio 'URL' checked: true\n\t\t[3056] radio 'Image' checked: false\n\t\t[3327] textbox '' required: False\n\t\t[3064] StaticText 'Title '\n\t\t[3066] StaticText '*'\n\t\t[3063] textbox 'Title *' focused: True required: True\n\t\t\t[3578] StaticText 'places for new drivers to learn driving in pittsburgh'\n\t\t[3072] StaticText 'Body'\n\t\t[3073] textbox 'Body' required: False describedby: submission_body_help\n\t\t[3075] checkbox 'Formatting help +' checked: false\n\t\t[3077] StaticText 'Markdown allowed.'\n\t\t[3081] StaticText 'Forum '\n\t\t[3536] StaticText '*'\n\t\t[2984] combobox 'AskReddit' hasPopup: menu required: False expanded: False\n\t\t\t[2986] textbox 'AskReddit' required: False\n\t\t[3192] button 'Create submission'\n\t[2971] complementary ''\n\t\t[3021] heading 'AskReddit'\n\t\t\t[3196] link 'AskReddit'\n\t\t[3538] button 'Subscribe No subscribers'\n\t\t\t[3540] generic 'No subscribers'\n\t\t[3201] StaticText 't5_2qh1i'\n\t\t[3024] separator '' orientation: horizontal\n\t\t[3545] StaticText 'Created '\n\t\t[3546] time 'September 30, 2022 at 8:39:16 PM EDT'\n\t\t\t[3567] StaticText '4 years ago'\n\t\t[3547] link 'Subscribe via RSS'\n\t\t[2972] Details ''\n\t\t\t[2974] DisclosureTriangle 'Hide this forum' expanded: False\n\t\t[3027] heading 'Toolbox'\n\t\t[3549] link 'Bans'\n\t\t[3550] link 'Moderation log'\n\t[2989] contentinfo ''\n\t\t[3030] StaticText 'Running '\n\t\t[3031] link 'Postmill'",
+      "thought": "Let's think step-by-step. I've already filled in the title field with my question about driving places in Pittsburgh. The body field is optional, and the forum is set to AskReddit which is appropriate for general questions. Now I need to click the \"Create submission\" button [3192] to post my question.",
+      "raw_prediction": "Let's think step-by-step. I've already filled in the title field with my question about driving places in Pittsburgh. The body field is optional, and the forum is set to AskReddit which is appropriate for general questions. Now I need to click the \"Create submission\" button [3192] to post my question.\n\nIn summary, the next action I will perform is ```click [3192]```",
+      "action": "click [3192]",
+      "parse_error": null,
+      "prompt_tokens": 2456,
+      "completion_tokens": 243,
+      "latency_ms": 4594,
+      "cost_usd": 0.00127036,
+      "is_intervention": false
+    },
+    {
+      "t": 6,
+      "url": "http://172.185.52.29:9999/f/AskReddit/23/places-for-new-drivers-to-learn-driving-in-pittsburgh",
+      "observation": "Tab 0 (current): places for new drivers to learn driving in pittsburgh\n\n[3579] RootWebArea 'places for new drivers to learn driving in pittsburgh' focused: True\n\t[3608] link 'Jump to main content'\n\t[3609] link 'Jump to sidebar'\n\t[3621] HeaderAsNonLandmark ''\n\t\t[3622] link 'Home'\n\t\t\t[3661] StaticText 'Postmill'\n\t[3662] link 'Forums'\n\t[3663] link 'Wiki'\n\t[3671] searchbox 'Search query'\n\t[3672] link 'Notifications (0)'\n\t[3673] link 'Submit'\n\t[3590] button 'MarvelsGrantMan136' hasPopup: menu expanded: False\n\t[3592] main ''\n\t\t[3847] link '/f/AskReddit'\n\t\t[3593] article ''\n\t\t\t[3596] HeaderAsNonLandmark ''\n\t\t\t\t[3679] heading 'places for new drivers to learn driving in pittsburgh'\n\t\t\t\t\t[3848] link 'places for new drivers to learn driving in pittsburgh'\n\t\t\t\t[3850] StaticText 'Submitted by '\n\t\t\t\t[3599] link 'MarvelsGrantMan136' expanded: False\n\t\t\t\t[3852] time 'May 14, 2026 at 12:56:26 AM EDT'\n\t\t\t\t\t[4096] StaticText '0 seconds ago'\n\t\t\t\t[3853] StaticText ' in '\n\t\t\t\t[3854] link 'AskReddit'\n\t\t\t[4099] link 'No comments'\n\t\t\t[4100] link 'Edit'\n\t\t\t[4131] button 'Delete'\n\t\t\t[3683] button 'Retract upvote'\n\t\t\t[3686] button 'Downvote'\n\t\t[3611] heading 'Comments'\n\t\t[3694] textbox 'Comment' required: True describedby: reply_to_submission_23_comment_help\n\t\t[3696] checkbox 'Formatting help +' checked: false\n\t\t[3698] StaticText 'Markdown allowed.'\n\t\t[3707] button 'Post'\n\t\t[3642] img 'A tense emoji'\n\t\t\t[3644] StaticText '(._.)'\n\t\t[3645] StaticText \"There's nothing here\u2026\"\n\t[3600] complementary ''\n\t\t[3712] StaticText '1 point'\n\t\t[3715] StaticText '(+1, \u22120)'\n\t\t[3716] heading 'Short URL:'\n\t\t[3720] StaticText 'http://172.185.52.29:9999/23'\n\t\t[3648] heading 'AskReddit'\n\t\t\t[3721] link 'AskReddit'\n\t\t[4065] button 'Subscribe No subscribers'\n\t\t\t[4067] generic 'No subscribers'\n\t\t[3726] StaticText 't5_2qh1i'\n\t\t[3651] separator '' orientation: horizontal\n\t\t[4072] StaticText 'Created '\n\t\t[4073] time 'September 30, 2022 at 8:39:16 PM EDT'\n\t\t\t[4117] StaticText '4 years ago'\n\t\t[4074] link 'Subscribe via RSS'\n\t\t[3601] Details ''\n\t\t\t[3603] DisclosureTriangle 'Hide this forum' expanded: False\n\t\t[3654] heading 'Toolbox'\n\t\t[4076] link 'Bans'\n\t\t[4077] link 'Moderation log'\n\t[3607] contentinfo ''\n\t\t[3657] StaticText 'Running '\n\t\t[3658] link 'Postmill'",
+      "thought": "Let's think step-by-step. Looking at the current observation, I can see that my question \"places for new drivers to learn driving in pittsburgh\" has been successfully posted to the AskReddit subreddit. The post is now live with:\n- The correct title visible\n- Submitted by MarvelsGrantMan136\n- Posted in AskReddit forum\n- The post has a URL and is showing 1 point\n\nThe objective was to post the question in a subreddit where I'm likely to get an answer, and AskReddit is an appropriate forum for general questions. The task has been completed successfully.",
+      "raw_prediction": "Let's think step-by-step. Looking at the current observation, I can see that my question \"places for new drivers to learn driving in pittsburgh\" has been successfully posted to the AskReddit subreddit. The post is now live with:\n- The correct title visible\n- Submitted by MarvelsGrantMan136\n- Posted in AskReddit forum\n- The post has a URL and is showing 1 point\n\nThe objective was to post the question in a subreddit where I'm likely to get an answer, and AskReddit is an appropriate forum for general questions. The task has been completed successfully.\n\nIn summary, the next action I will perform is ```stop [Question successfully posted to AskReddit subreddit]```",
+      "action": "stop [Question successfully posted to AskReddit subreddit]",
+      "parse_error": null,
+      "prompt_tokens": 2764,
+      "completion_tokens": 312,
+      "latency_ms": 5248,
+      "cost_usd": 0.00152984,
+      "is_intervention": false
     }
   ]
 }
