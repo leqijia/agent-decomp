@@ -163,6 +163,12 @@ def main() -> int:
                         help=f"Agent model slug (default: {AGENT_MODEL})")
     parser.add_argument("--max-steps", type=int, default=50)
     parser.add_argument("--max-obs-length", type=int, default=4096)
+    parser.add_argument(
+        "--sleep-after-execution",
+        type=float,
+        default=2.0,
+        help="Seconds to wait after each browser action/reset for page settling.",
+    )
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument(
         "--thinking", action="store_true", default=True,
@@ -232,6 +238,7 @@ def main() -> int:
           f"{'--task-ids' if args.task_ids else (args.task_list or _DEFAULT_TASK_LIST)})")
     print(f"Out dir:     {out_dir}")
     print(f"Max steps:   {args.max_steps}")
+    print(f"Action wait: {args.sleep_after_execution}s")
     print(f"Thinking:    {args.thinking}")
 
     if not args.skip_auto_login:
@@ -241,6 +248,7 @@ def main() -> int:
         "model": args.model,
         "max_steps": args.max_steps,
         "max_obs_length": args.max_obs_length,
+        "sleep_after_execution": args.sleep_after_execution,
         "temperature": args.temperature,
         "thinking": args.thinking,
         "rerun_crashes": args.rerun_crashes,

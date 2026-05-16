@@ -330,6 +330,7 @@ def run_episode(
     model: str = AGENT_MODEL,
     max_steps: int = 50,
     max_obs_length: int = 4096,
+    sleep_after_execution: float | None = None,
     temperature: float = 0.0,
     window_size: int | None = None,
     oracle_regen_every_k: int | None = None,
@@ -370,6 +371,11 @@ def run_episode(
             model=model,
             max_steps=max_steps,
             max_obs_length=max_obs_length,
+            sleep_after_execution=(
+                sleep_after_execution
+                if sleep_after_execution is not None
+                else StateActConfig.sleep_after_execution
+            ),
             temperature=temperature,
             thinking=thinking,
         )
@@ -383,6 +389,11 @@ def run_episode(
         model=model,
         max_steps=max_steps,
         max_obs_length=max_obs_length,
+        sleep_after_execution=(
+            sleep_after_execution
+            if sleep_after_execution is not None
+            else EpisodeConfig.sleep_after_execution
+        ),
         temperature=temperature,
         thinking=thinking,
     )
