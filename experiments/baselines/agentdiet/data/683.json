@@ -12,19 +12,27 @@
   "condition": "agentdiet",
   "observation_type": "accessibility_tree",
   "action_set_tag": "id_accessibility_tree",
-  "max_steps": 75,
+  "max_steps": 50,
   "temperature": 0.0,
   "max_obs_length": 4096,
-  "started_at": "2026-05-09T04:04:47Z",
-  "ended_at": "2026-05-09T04:04:47Z",
-  "total_steps": 0,
+  "started_at": "2026-05-16T21:30:16Z",
+  "ended_at": "2026-05-16T21:30:18Z",
+  "total_steps": 1,
   "stop_reason": "crash",
   "success": null,
   "eval_score": null,
   "steps": [
     {
-      "crash": "It looks like you are using Playwright Sync API inside the asyncio loop.\nPlease use the Async API instead.",
-      "traceback": "Traceback (most recent call last):\n  File \"/home/leqijia/agent-decomp/harness/evaluator.py\", line 405, in run_episode\n    obs, info = env.reset(options={\"config_file\": config_file})\n                ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<@beartype(webarena.browser_env.envs.ScriptBrowserEnv.reset) at 0x77e0059ce340>\", line 65, in reset\n  File \"/home/leqijia/agent-decomp/webarena/browser_env/envs.py\", line 203, in reset\n    self.setup(config_file=config_file)\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<@beartype(webarena.browser_env.envs.ScriptBrowserEnv.setup) at 0x77e0059cdf80>\", line 36, in setup\n  File \"/home/leqijia/agent-decomp/webarena/browser_env/envs.py\", line 127, in setup\n    self.playwright = self.context_manager.__enter__()\n                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"/home/leqijia/miniconda3/lib/python3.13/site-packages/playwright/sync_api/_context_manager.py\", line 47, in __enter__\n                raise Error(\n    ...<2 lines>...\n                )\nplaywright._impl._errors.Error: It looks like you are using Playwright Sync API inside the asyncio loop.\nPlease use the Async API instead.\n"
+      "t": 1,
+      "url": "http://172.185.52.29:9999/",
+      "observation": "Tab 0 (current): Postmill\n\n[1] RootWebArea 'Postmill' focused: True\n\t[24] link 'Jump to main content'\n\t[25] link 'Jump to sidebar'\n\t[31] HeaderAsNonLandmark ''\n\t\t[32] link 'Home'\n\t\t\t[53] StaticText 'Postmill'\n\t[55] link 'Forums'\n\t[56] link 'Wiki'\n\t[64] searchbox 'Search query'\n\t[65] link 'Notifications (0)'\n\t[66] link 'Submit'\n\t[12] button 'MarvelsGrantMan136' hasPopup: menu expanded: False\n\t[14] main ''\n\t\t[171] link 'Submissions'\n\t\t[172] link 'Comments'\n\t\t[18] button 'Filter on: Subscribed' hasPopup: menu expanded: False\n\t\t[20] button 'Sort by: Hot' hasPopup: menu expanded: False\n\t[26] complementary ''\n\t\t[46] heading 'Subscribed forums'\n\t\t[175] link 'Cyberpunk'\n\t\t[176] link 'sci_fi'\n\t[23] contentinfo ''\n\t\t[49] StaticText 'Running '\n\t\t[50] link 'Postmill'",
+      "thought": "",
+      "raw_prediction": "[API_ERROR] OpenRouter returned 403: {\"error\":{\"message\":\"Key limit exceeded (total limit). Manage it using https://openrouter.ai/settings/keys\",\"code\":403}}",
+      "action": "",
+      "parse_error": "api_error",
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "latency_ms": 0
     }
   ]
 }

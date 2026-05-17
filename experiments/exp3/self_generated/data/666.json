@@ -10,19 +10,27 @@
   "agent_variant": "stateact",
   "observation_type": "accessibility_tree",
   "action_set_tag": "id_accessibility_tree",
-  "max_steps": 75,
+  "max_steps": 50,
   "temperature": 0.0,
   "max_obs_length": 4096,
-  "started_at": "2026-05-09T04:05:08Z",
-  "ended_at": "2026-05-09T04:05:08Z",
-  "total_steps": 0,
+  "started_at": "2026-05-16T23:19:23Z",
+  "ended_at": "2026-05-16T23:19:32Z",
+  "total_steps": 1,
   "stop_reason": "crash",
   "success": null,
   "eval_score": null,
   "steps": [
     {
-      "crash": "It looks like you are using Playwright Sync API inside the asyncio loop.\nPlease use the Async API instead.",
-      "traceback": "Traceback (most recent call last):\n  File \"/home/leqijia/agent-decomp/agent/stateact_agent.py\", line 251, in run_stateact_episode\n    obs, info = env.reset(options={\"config_file\": cfg.config_file})\n                ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<@beartype(webarena.browser_env.envs.ScriptBrowserEnv.reset) at 0x76832bcda340>\", line 65, in reset\n  File \"/home/leqijia/agent-decomp/webarena/browser_env/envs.py\", line 203, in reset\n    self.setup(config_file=config_file)\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<@beartype(webarena.browser_env.envs.ScriptBrowserEnv.setup) at 0x76832bcd9f80>\", line 36, in setup\n  File \"/home/leqijia/agent-decomp/webarena/browser_env/envs.py\", line 127, in setup\n    self.playwright = self.context_manager.__enter__()\n                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"/home/leqijia/miniconda3/lib/python3.13/site-packages/playwright/sync_api/_context_manager.py\", line 47, in __enter__\n                raise Error(\n    ...<2 lines>...\n                )\nplaywright._impl._errors.Error: It looks like you are using Playwright Sync API inside the asyncio loop.\nPlease use the Async API instead.\n"
+      "t": 1,
+      "url": "http://172.185.52.29:8023/primer/design",
+      "observation": "Tab 0 (current): Primer / design \u00b7 GitLab\n\n[1] RootWebArea 'Primer / design \u00b7 GitLab' focused: True\n\t[58] link 'Skip to content'\n\t[239] link 'Dashboard'\n\t[425] button '' hasPopup: menu expanded: False\n\t[1879] textbox 'Search GitLab' required: False\n\t[1486] generic 'Use the shortcut key <kbd>/</kbd> to start a search'\n\t[432] link 'Create new...'\n\t[434] link 'Issues'\n\t\t[757] generic '13 assigned issues'\n\t[435] link 'Merge requests'\n\t\t[759] generic '8 merge requests'\n\t[437] link 'To-Do List'\n\t\t[775] generic 'Todos count'\n\t[438] link 'Help'\n\t[440] link 'Byte Blaze'\n\t\t[809] img 'Byte Blaze'\n\t[59] complementary 'Project navigation'\n\t\t[274] listitem 'design'\n\t\t\t[442] link 'design'\n\t\t\t\t[856] StaticText 'D'\n\t\t[443] link 'Project information'\n\t\t[445] link 'Repository'\n\t\t[447] link 'Issues'\n\t\t\t[921] StaticText '21'\n\t\t[449] link 'Merge requests'\n\t\t\t[950] StaticText '16'\n\t\t[451] link 'CI/CD'\n\t\t[453] link 'Security & Compliance'\n\t\t[455] link 'Deployments'\n\t\t[457] link 'Packages and registries'\n\t\t[459] link 'Infrastructure'\n\t\t[461] link 'Monitor'\n\t\t[463] link 'Analytics'\n\t\t[465] link 'Wiki'\n\t\t[467] link 'Snippets'\n\t\t[191] button 'Collapse sidebar'\n\t[63] alert '' live: assertive atomic: True relevant: additions text\n\t\t[66] button 'Dismiss'\n\t\t[67] alert '' live: assertive atomic: True relevant: additions text\n\t\t\t[306] StaticText \"You can't push or pull repositories using SSH until you add an SSH key to your profile.\"\n\t\t\t[307] link 'Add SSH key'\n\t\t\t[308] button \"Don't show again\"\n\t[64] navigation 'Breadcrumbs'\n\t\t[484] link 'Primer'\n\t\t[486] link 'design'\n\t[7] main ''\n\t\t[320] StaticText 'D'\n\t\t[208] heading 'design Public - The project can be accessed without any authentication.'\n\t\t\t[211] generic 'Public - The project can be accessed without any authentication.'\n\t\t[214] StaticText 'Project ID: 180 '\n\t\t[215] button 'Copy project ID' live: polite atomic: False relevant: additions text\n\t\t[217] link 'Leave project'\n\t\t[326] button '' hasPopup: menu expanded: False\n\t\t[220] button 'Unstar'\n\t\t[221] link '22'\n\t\t[331] link 'Fork'\n\t\t[223] link '0'\n\t\t[582] link '921 Commits'\n\t\t[583] link '38 Branches'\n\t\t[584] link '0 Tags'\n\t\t[1145] StaticText '97.8 MB'\n\t\t[1141] StaticText ' Project Storage'\n\t\t[229] StaticText 'Primer Design Guidelines'\n\t\t[231] generic '<span class=\"repository-language-bar-tooltip-language\">JavaScript</span>&nbsp;<span class=\"repository-language-bar-tooltip-share\">77.4%</span>'\n\t\t[232] generic '<span class=\"repository-language-bar-tooltip-language\">TSX</span>&nbsp;<span class=\"repository-language-bar-tooltip-share\">22.6%</span>'\n\t\t[344] img 'user avatar'\n\t\t[348] link 'Add interface guidelines for ProgressBar (#452)'\n\t\t[349] button 'Toggle commit description'\n\t\t[354] StaticText 'Mike Perrotti authored '\n\t\t[355] time 'Mar 24, 2023 4:33pm UTC'\n\t\t\t[589] StaticText '3 years ago'\n\t\t[368] button 'Unverified'\n\t\t[367] group ''\n\t\t\t[592] StaticText '260e840e'\n\t\t\t[370] button 'Copy commit SHA' live: polite atomic: False relevant: additions text\n\t\t[1149] button 'main' hasPopup: menu expanded: False\n\t\t[18] navigation 'Files breadcrumb'\n\t\t\t[1855] link 'design'\n\t\t\t[1885] StaticText '/'\n\t\t\t[1886] button 'Add to tree' hasPopup: menu expanded: False\n\t\t[596] link 'Find file'\n\t\t[602] link 'Web IDE'\n\t\t[603] button 'Download'\n\t\t\t[1156] StaticText 'Select Archive Format'\n\t\t[606] link 'Clone'\n\t\t[630] link 'README'\n\t\t[631] link 'MIT License'\n\t\t[632] link 'CONTRIBUTING'\n\t\t[36] table 'Loading files, directories, and submodules in the path / for commit reference main' live: polite atomic: False relevant: additions text\n\t\t\t[1222] row ''\n\t\t\t\t[1223] columnheader 'Name' required: False\n\t\t\t\t[1224] columnheader 'Last commit' required: False\n\t\t\t\t[1225] columnheader 'Last update' required: False",
+      "thought": "",
+      "raw_prediction": "[API_ERROR] OpenRouter returned 403: {\"error\":{\"message\":\"Key limit exceeded (total limit). Manage it using https://openrouter.ai/settings/keys\",\"code\":403}}",
+      "action": "",
+      "parse_error": "api_error",
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "latency_ms": 0
     }
   ]
 }

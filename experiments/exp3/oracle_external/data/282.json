@@ -11,19 +11,19 @@
   "condition": "oracle_external",
   "observation_type": "accessibility_tree",
   "action_set_tag": "id_accessibility_tree",
-  "max_steps": 75,
+  "max_steps": 50,
   "temperature": 0.0,
   "max_obs_length": 4096,
-  "started_at": "2026-05-09T04:05:16Z",
-  "ended_at": "2026-05-09T04:05:16Z",
+  "started_at": "2026-05-16T23:39:18Z",
+  "ended_at": "2026-05-16T23:39:29Z",
   "total_steps": 0,
   "stop_reason": "crash",
   "success": null,
   "eval_score": null,
   "steps": [
     {
-      "crash": "It looks like you are using Playwright Sync API inside the asyncio loop.\nPlease use the Async API instead.",
-      "traceback": "Traceback (most recent call last):\n  File \"/home/leqijia/agent-decomp/harness/evaluator.py\", line 405, in run_episode\n    obs, info = env.reset(options={\"config_file\": config_file})\n                ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<@beartype(webarena.browser_env.envs.ScriptBrowserEnv.reset) at 0x72fbd0ade340>\", line 65, in reset\n  File \"/home/leqijia/agent-decomp/webarena/browser_env/envs.py\", line 203, in reset\n    self.setup(config_file=config_file)\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<@beartype(webarena.browser_env.envs.ScriptBrowserEnv.setup) at 0x72fbd0addf80>\", line 36, in setup\n  File \"/home/leqijia/agent-decomp/webarena/browser_env/envs.py\", line 127, in setup\n    self.playwright = self.context_manager.__enter__()\n                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"/home/leqijia/miniconda3/lib/python3.13/site-packages/playwright/sync_api/_context_manager.py\", line 47, in __enter__\n                raise Error(\n    ...<2 lines>...\n                )\nplaywright._impl._errors.Error: It looks like you are using Playwright Sync API inside the asyncio loop.\nPlease use the Async API instead.\n"
+      "crash": "OpenRouter returned 403: {\"error\":{\"message\":\"Key limit exceeded (total limit). Manage it using https://openrouter.ai/settings/keys\",\"code\":403}}",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/leqijia/agent-decomp/harness/evaluator.py\", line 488, in run_episode\n    ctx = context_policy(\n          ^^^^^^^^^^^^^^^\n  File \"/home/leqijia/agent-decomp/harness/evaluator.py\", line 305, in _oe\n    return _oracle_external_policy(\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/leqijia/agent-decomp/harness/evaluator.py\", line 208, in _oracle_external_policy\n    result = call_oracle(prompt, use_stub=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/leqijia/agent-decomp/oracle/generate_oracle.py\", line 303, in call_oracle\n    result = chat_completion(\n             ^^^^^^^^^^^^^^^^\n  File \"/home/leqijia/agent-decomp/llm/client.py\", line 43, in chat_completion\n    return _openrouter_chat(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/leqijia/agent-decomp/llm/openrouter.py\", line 99, in chat_completion\n    raise OpenRouterError(\nllm.openrouter.OpenRouterError: OpenRouter returned 403: {\"error\":{\"message\":\"Key limit exceeded (total limit). Manage it using https://openrouter.ai/settings/keys\",\"code\":403}}\n"
     }
   ]
 }

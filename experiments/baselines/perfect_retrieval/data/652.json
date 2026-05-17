@@ -11,19 +11,27 @@
   "condition": "perfect_retrieval",
   "observation_type": "accessibility_tree",
   "action_set_tag": "id_accessibility_tree",
-  "max_steps": 75,
+  "max_steps": 50,
   "temperature": 0.0,
   "max_obs_length": 4096,
-  "started_at": "2026-05-09T04:05:00Z",
-  "ended_at": "2026-05-09T04:05:00Z",
-  "total_steps": 0,
+  "started_at": "2026-05-16T22:21:16Z",
+  "ended_at": "2026-05-16T22:21:19Z",
+  "total_steps": 1,
   "stop_reason": "crash",
   "success": null,
   "eval_score": null,
   "steps": [
     {
-      "crash": "It looks like you are using Playwright Sync API inside the asyncio loop.\nPlease use the Async API instead.",
-      "traceback": "Traceback (most recent call last):\n  File \"/home/leqijia/agent-decomp/harness/evaluator.py\", line 405, in run_episode\n    obs, info = env.reset(options={\"config_file\": config_file})\n                ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<@beartype(webarena.browser_env.envs.ScriptBrowserEnv.reset) at 0x77038a4d6340>\", line 65, in reset\n  File \"/home/leqijia/agent-decomp/webarena/browser_env/envs.py\", line 203, in reset\n    self.setup(config_file=config_file)\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<@beartype(webarena.browser_env.envs.ScriptBrowserEnv.setup) at 0x77038a4d5f80>\", line 36, in setup\n  File \"/home/leqijia/agent-decomp/webarena/browser_env/envs.py\", line 127, in setup\n    self.playwright = self.context_manager.__enter__()\n                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"/home/leqijia/miniconda3/lib/python3.13/site-packages/playwright/sync_api/_context_manager.py\", line 47, in __enter__\n                raise Error(\n    ...<2 lines>...\n                )\nplaywright._impl._errors.Error: It looks like you are using Playwright Sync API inside the asyncio loop.\nPlease use the Async API instead.\n"
+      "t": 1,
+      "url": "http://172.185.52.29:9999/f/technology/134852/ai-experts-disown-musk-backed-campaign-citing-their-research",
+      "observation": "Tab 0 (current): AI experts disown Musk-backed campaign citing their research\n\n[1] RootWebArea 'AI experts disown Musk-backed campaign citing their research' focused: True\n\t[30] link 'Jump to main content'\n\t[31] link 'Jump to sidebar'\n\t[43] HeaderAsNonLandmark ''\n\t\t[44] link 'Home'\n\t\t\t[83] StaticText 'Postmill'\n\t[84] link 'Forums'\n\t[85] link 'Wiki'\n\t[93] searchbox 'Search query'\n\t[94] link 'Notifications (0)'\n\t[95] link 'Submit'\n\t[18] button 'MarvelsGrantMan136' hasPopup: menu expanded: False\n\t[19] main ''\n\t\t[273] link '/f/technology'\n\t\t[20] article ''\n\t\t\t[23] HeaderAsNonLandmark ''\n\t\t\t\t[102] heading 'AI experts disown Musk-backed campaign citing their research'\n\t\t\t\t\t[274] link 'AI experts disown Musk-backed campaign citing their research'\n\t\t\t\t[104] link 'reuters.com'\n\t\t\t\t[277] StaticText 'Submitted by '\n\t\t\t\t[26] link 'Don_Gato1' expanded: False\n\t\t\t\t[524] StaticText 't3_127ti42'\n\t\t\t\t[281] time 'March 31, 2023 at 1:56:20 PM EDT'\n\t\t\t\t\t[528] StaticText '3 years ago'\n\t\t\t\t[282] StaticText ' in '\n\t\t\t\t[283] link 'technology'\n\t\t\t[531] link 'No comments'\n\t\t\t[109] button 'Upvote'\n\t\t\t[286] StaticText '4'\n\t\t\t[112] button 'Downvote'\n\t\t[33] heading 'Comments'\n\t\t[120] textbox 'Comment' required: True describedby: reply_to_submission_134852_comment_help\n\t\t[122] checkbox 'Formatting help +' checked: false\n\t\t[124] StaticText 'Markdown allowed.'\n\t\t[133] button 'Post'\n\t\t[64] img 'A tense emoji'\n\t\t\t[66] StaticText '(\uff9f\u0434\uff9f)'\n\t\t[67] StaticText \"There's nothing here\u2026\"\n\t[5] complementary ''\n\t\t[138] StaticText '0 points'\n\t\t[141] StaticText '(+0, \u22120)'\n\t\t[142] heading 'Short URL:'\n\t\t[146] StaticText 'http://172.185.52.29:9999/134852'\n\t\t[70] heading 'technology'\n\t\t\t[147] link 'technology'\n\t\t[492] button 'Subscribe No subscribers'\n\t\t\t[494] generic 'No subscribers'\n\t\t\t\t[546] StaticText '0'\n\t\t[152] StaticText 't5_2qh16'\n\t\t[73] separator '' orientation: horizontal\n\t\t[499] StaticText 'Created '\n\t\t[500] time 'September 30, 2022 at 9:22:49 PM EDT'\n\t\t\t[547] StaticText '4 years ago'\n\t\t[501] link 'Subscribe via RSS'\n\t\t[6] Details ''\n\t\t\t[8] DisclosureTriangle 'Hide this forum' expanded: False\n\t\t[76] heading 'Toolbox'\n\t\t[503] link 'Bans'\n\t\t[504] link 'Moderation log'\n\t[29] contentinfo ''\n\t\t[79] StaticText 'Running '\n\t\t[80] link 'Postmill'",
+      "thought": "",
+      "raw_prediction": "[API_ERROR] OpenRouter returned 403: {\"error\":{\"message\":\"Key limit exceeded (total limit). Manage it using https://openrouter.ai/settings/keys\",\"code\":403}}",
+      "action": "",
+      "parse_error": "api_error",
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "latency_ms": 0
     }
   ]
 }
