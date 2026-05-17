@@ -109,6 +109,12 @@ for b, vals in gamma.items():
     assert "oracle_acc" in vals and "raw_acc" in vals and "gamma" in vals and "count" in vals
     assert vals["gamma"] == round(vals["oracle_acc"] - vals["raw_acc"], 4), \
         f"gamma mismatch in bin {b}"
+
+empty_gamma = compute_gamma_L(
+    [{"task_id": "task_000", "success": None, "total_steps": 5}],
+    [{"task_id": "task_000", "success": True, "total_steps": 5}],
+)
+assert empty_gamma == {}, f"unscored oracle rows should not produce Gamma: {empty_gamma}"
 print("PASS\n")
 
 
@@ -129,6 +135,12 @@ assert set(delta.keys()) == {"<=10", "11-20", "21-40", "41-80"}
 for b, vals in delta.items():
     assert "oracle_acc" in vals and "self_gen_acc" in vals and "delta_synth" in vals
     assert vals["delta_synth"] == round(vals["oracle_acc"] - vals["self_gen_acc"], 4)
+
+empty_delta = compute_delta_synth(
+    [{"task_id": "task_000", "success": None, "total_steps": 5}],
+    [{"task_id": "task_000", "success": True, "total_steps": 5}],
+)
+assert empty_delta == {}, f"unscored oracle rows should not produce delta_synth: {empty_delta}"
 print("PASS\n")
 
 print("All tests passed.")

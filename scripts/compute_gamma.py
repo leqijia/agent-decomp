@@ -68,10 +68,12 @@ def compute_gamma_from_json(oracle_results, raw_results):
     gamma = compute_gamma_L(oracle_results, raw_results)
     return {
         b: gamma.get(b, {
-            'oracle_acc': 0.0,
-            'raw_acc': 0.0,
-            'gamma': 0.0,
+            'oracle_acc': None,
+            'raw_acc': None,
+            'gamma': None,
             'count': 0,
+            'oracle_n': 0,
+            'raw_n': 0,
         })
         for b in LENGTH_BINS
     }

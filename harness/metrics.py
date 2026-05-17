@@ -109,6 +109,23 @@ def _bin_results(results: list[dict]) -> dict[str, list[dict]]:
     return bins
 
 
+def _scored_by_task(results: list[dict]) -> dict[str, dict]:
+    """Map task_id to scored result, dropping crash/unscored rows."""
+    out: dict[str, dict] = {}
+    for r in results:
+        task_id = r.get("task_id")
+        if task_id is None or r.get("success") is None:
+            continue
+        out[str(task_id)] = r
+    return out
+
+
+def _bool_acc(results: list[dict]) -> float | None:
+    if not results:
+        return None
+    return round(sum(1 for r in results if r["success"]) / len(results), 4)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -226,21 +243,42 @@ def compute_gamma_L(oracle_results: list[dict], raw_results: list[dict]) -> dict
         }
         Only bins with at least one result in either condition are included.
     """
-    oracle_bins = _bin_results(oracle_results)
-    raw_bins    = _bin_results(raw_results)
-    all_bins    = sorted(set(oracle_bins) | set(raw_bins),
-                         key=lambda b: _LENGTH_BIN_ORDER[b])
+    oracle_by_task = _scored_by_task(oracle_results)
+    raw_by_task = _scored_by_task(raw_results)
+    common_task_ids = sorted(set(oracle_by_task) & set(raw_by_task))
+
+    paired_bins: dict[str, tuple[list[dict], list[dict]]] = {}
+    for task_id in common_task_ids:
+        oracle = oracle_by_task[task_id]
+        raw = raw_by_task[task_id]
+        # Bin by the original/raw trajectory length so partial condition runs
+        # do not shift examples across bins due to condition-specific stopping.
+        b = _length_bin(raw.get("total_steps", 0))
+        if b is None:
+            continue
+        oracle_bin, raw_bin = paired_bins.setdefault(b, ([], []))
+        oracle_bin.append(oracle)
+        raw_bin.append(raw)
+
+    all_bins = sorted(paired_bins, key=lambda b: _LENGTH_BIN_ORDER[b])
 
     out = {}
     for b in all_bins:
-        oracle_acc, oracle_n = _acc_and_count(oracle_bins.get(b, []))
-        raw_acc,    raw_n    = _acc_and_count(raw_bins.get(b, []))
-        count = max(oracle_n, raw_n)
+        oracle_bin, raw_bin = paired_bins[b]
+        oracle_acc = _bool_acc(oracle_bin)
+        raw_acc = _bool_acc(raw_bin)
+        count = min(len(oracle_bin), len(raw_bin))
         out[b] = {
             "oracle_acc": oracle_acc,
             "raw_acc":    raw_acc,
-            "gamma":      round(oracle_acc - raw_acc, 4),
+            "gamma":      (
+                round(oracle_acc - raw_acc, 4)
+                if oracle_acc is not None and raw_acc is not None
+                else None
+            ),
             "count":      count,
+            "oracle_n":   len(oracle_bin),
+            "raw_n":      len(raw_bin),
         }
     return out
 
@@ -257,20 +295,39 @@ def compute_delta_synth(oracle_results: list[dict], self_gen_results: list[dict]
 
     Returns same structure as compute_gamma_L.
     """
-    oracle_bins   = _bin_results(oracle_results)
-    self_gen_bins = _bin_results(self_gen_results)
-    all_bins = sorted(set(oracle_bins) | set(self_gen_bins),
-                      key=lambda b: _LENGTH_BIN_ORDER[b])
+    oracle_by_task = _scored_by_task(oracle_results)
+    self_gen_by_task = _scored_by_task(self_gen_results)
+    common_task_ids = sorted(set(oracle_by_task) & set(self_gen_by_task))
+
+    paired_bins: dict[str, tuple[list[dict], list[dict]]] = {}
+    for task_id in common_task_ids:
+        oracle = oracle_by_task[task_id]
+        self_gen = self_gen_by_task[task_id]
+        b = _length_bin(oracle.get("total_steps", 0))
+        if b is None:
+            continue
+        oracle_bin, self_gen_bin = paired_bins.setdefault(b, ([], []))
+        oracle_bin.append(oracle)
+        self_gen_bin.append(self_gen)
+
+    all_bins = sorted(paired_bins, key=lambda b: _LENGTH_BIN_ORDER[b])
 
     out = {}
     for b in all_bins:
-        oracle_acc,   oracle_n   = _acc_and_count(oracle_bins.get(b, []))
-        self_gen_acc, self_gen_n = _acc_and_count(self_gen_bins.get(b, []))
-        count = max(oracle_n, self_gen_n)
+        oracle_bin, self_gen_bin = paired_bins[b]
+        oracle_acc = _bool_acc(oracle_bin)
+        self_gen_acc = _bool_acc(self_gen_bin)
+        count = min(len(oracle_bin), len(self_gen_bin))
         out[b] = {
             "oracle_acc":   oracle_acc,
             "self_gen_acc": self_gen_acc,
-            "delta_synth":  round(oracle_acc - self_gen_acc, 4),
+            "delta_synth":  (
+                round(oracle_acc - self_gen_acc, 4)
+                if oracle_acc is not None and self_gen_acc is not None
+                else None
+            ),
             "count":        count,
+            "oracle_n":     len(oracle_bin),
+            "self_gen_n":   len(self_gen_bin),
         }
     return out
