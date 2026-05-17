@@ -1019,6 +1019,32 @@ def run_intervention(
 # evaluate_batch
 # ---------------------------------------------------------------------------
 
+_API_LIMIT_MARKERS = (
+    "Key limit exceeded",
+    "requires more credits",
+    "OpenRouter returned 402",
+    "OpenRouter returned 403",
+    "limit_remaining",
+)
+
+
+def _has_api_limit_error(result: dict) -> bool:
+    """Detect non-retryable OpenRouter budget/quota failures in a run result."""
+    if result.get("stop_reason") != "crash":
+        return False
+
+    fields: list[str] = []
+    for step in result.get("steps", []) or []:
+        for key in ("raw_prediction", "crash", "traceback"):
+            value = step.get(key)
+            if value:
+                fields.append(str(value))
+    if result.get("error"):
+        fields.append(str(result["error"]))
+
+    return any(marker in text for text in fields for marker in _API_LIMIT_MARKERS)
+
+
 def evaluate_batch(
     condition: str,
     config_files: list[str],
@@ -1082,11 +1108,18 @@ def evaluate_batch(
             new_results += 1
             new_cost += sum((s.get("cost_usd") or 0) for s in result.get("steps", []))
             results.append(result)
+            if _has_api_limit_error(result):
+                print(
+                    "Stopping early: OpenRouter budget/key limit error "
+                    f"on task {task_id}. Add credits or raise the key limit "
+                    "before resuming with --rerun-crashes."
+                )
+                break
         except Exception:
             print(f"  CRASH on task {task_id}")
             traceback.print_exc()
             new_results += 1
-            results.append({
+            crash_result = {
                 "task_id": task_id,
                 "condition": condition,
                 "stop_reason": "crash",
@@ -1094,7 +1127,15 @@ def evaluate_batch(
                 "eval_score": None,
                 "total_steps": 0,
                 "tokens_used": 0,
-            })
+            }
+            results.append(crash_result)
+            if _has_api_limit_error(crash_result):
+                print(
+                    "Stopping early: OpenRouter budget/key limit error "
+                    f"on task {task_id}. Add credits or raise the key limit "
+                    "before resuming with --rerun-crashes."
+                )
+                break
 
     print(f"Batch new/rerun result files: {new_results}; reported new cost: ${new_cost:.4f}")
     return results
