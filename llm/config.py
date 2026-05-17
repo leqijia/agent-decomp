@@ -26,7 +26,8 @@ GENERALIZABILITY_MODEL Exp 1 generalizability condition (100-task subset).
                        GPT-4.5 via OpenRouter.
 
 ACON_MODEL             ACON compression baseline LLM.
-                       Defaults to same as ORACLE_MODEL (Claude Sonnet).
+                       Defaults to AGENT_MODEL so compression baselines do
+                       not silently spend oracle-model money.
 """
 from __future__ import annotations
 
@@ -39,4 +40,4 @@ load_dotenv()
 AGENT_MODEL: str = os.environ.get("AGENT_MODEL", "qwen/qwen3.5-27b")
 ORACLE_MODEL: str = os.environ.get("ORACLE_MODEL", "anthropic/claude-sonnet-4-6")
 GENERALIZABILITY_MODEL: str = os.environ.get("GENERALIZABILITY_MODEL", "openai/gpt-5.2")
-ACON_MODEL: str = os.environ.get("ACON_MODEL", "anthropic/claude-sonnet-4-6")
+ACON_MODEL: str = os.environ.get("ACON_MODEL", AGENT_MODEL)

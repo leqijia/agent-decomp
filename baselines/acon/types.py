@@ -13,6 +13,7 @@ class CompressedContext:
     input_tokens: int
     output_tokens: int
     model: str
+    cost_usd: float | None = None
 
 
 @dataclass

@@ -13,7 +13,7 @@ from baselines.trajectory import (
 )
 
 from llm.config import ACON_MODEL
-from .llm import LLMGenerate, openrouter_generate
+from .llm import LLMGenerate, openrouter_completion, openrouter_generate
 from .parsing import extract_compressed_context
 from .templating import build_compress_user_message
 from .types import CompressedContext
@@ -40,21 +40,28 @@ def compress_trajectory(
     )
     enc = get_encoding(encoding_name)
     input_tokens = count_tokens(user_message, enc)
+    output_tokens = 0
 
     generate = llm if llm is not None else openrouter_generate
     if generate is openrouter_generate:
-        raw = openrouter_generate(user_message, model=model or None)
+        chat = openrouter_completion(user_message, model=model or None)
+        raw = chat.content.strip()
         used_model = model or ACON_MODEL
+        input_tokens = chat.prompt_tokens or input_tokens
+        output_tokens = chat.completion_tokens or 0
+        cost_usd = chat.cost_usd
     else:
         raw = generate(user_message)
         used_model = model or "stub"
+        cost_usd = None
 
     compressed = extract_compressed_context(raw)
-    out_tokens = count_tokens(compressed, enc)
+    out_tokens = output_tokens or count_tokens(compressed, enc)
     return CompressedContext(
         compressed_text=compressed,
         raw_response=raw,
         input_tokens=input_tokens,
         output_tokens=out_tokens,
         model=used_model,
+        cost_usd=cost_usd,
     )

@@ -70,6 +70,8 @@ def run_acon_compress(
     return {
         "compressed_text": result.compressed_text,
         "input_tokens": result.input_tokens,
+        "output_tokens": result.output_tokens,
+        "cost_usd": result.cost_usd,
         "model": result.model,
     }
 
@@ -80,6 +82,7 @@ def run_acon_compress(
 
 _INTERVENTION_HISTORY_STEPS = int(os.environ.get("INTERVENTION_HISTORY_STEPS", "12"))
 _INTERVENTION_THOUGHT_CHARS = int(os.environ.get("INTERVENTION_THOUGHT_CHARS", "500"))
+_LAST_POLICY_COST_USD = 0.0
 
 
 def _clip_text(text: Any, max_chars: int) -> str:
@@ -171,7 +174,9 @@ def _agentdiet_policy(
 def _acon_policy(
     steps_so_far: list[dict], current_observation: str, intent: str
 ) -> str:
+    global _LAST_POLICY_COST_USD
     result = run_acon_compress(intent, steps_so_far)
+    _LAST_POLICY_COST_USD = result.get("cost_usd") or 0.0
     return result["compressed_text"]
 
 
@@ -347,6 +352,8 @@ def run_episode(
 
     Returns a dict conforming to trajectories/SPEC.md.
     """
+    global _LAST_POLICY_COST_USD
+
     if condition not in VALID_CONDITIONS:
         raise ValueError(f"Unknown condition: {condition}. Valid: {VALID_CONDITIONS}")
 
@@ -483,6 +490,7 @@ def run_episode(
             step_url = env.page.url
             obs_text = obs.get("text", "")
             obs_truncated = truncate_observation(obs_text, max_obs_length)
+            _LAST_POLICY_COST_USD = 0.0
 
             if policy_name == "oracle_external":
                 ctx = context_policy(
@@ -494,6 +502,7 @@ def run_episode(
                 )
             else:
                 ctx = context_policy(steps_so_far, obs_truncated, intent)
+            context_cost_usd = _LAST_POLICY_COST_USD
             if ctx:
                 augmented_obs = f"CONTEXT:\n{ctx}\n\nCURRENT OBSERVATION:\n{obs_truncated}"
             else:
@@ -540,6 +549,9 @@ def run_episode(
                         "action": "", "parse_error": parse_error,
                         "prompt_tokens": None, "completion_tokens": None,
                         "latency_ms": 0,
+                        "agent_cost_usd": None,
+                        "context_cost_usd": context_cost_usd,
+                        "cost_usd": context_cost_usd or None,
                     }
                     result_dict["steps"].append(step_dict)
                     steps_so_far.append(step_dict)
@@ -554,9 +566,14 @@ def run_episode(
                 prompt_tokens = chat.prompt_tokens
                 completion_tokens = chat.completion_tokens
                 latency_ms = chat.latency_ms
-                cost_usd = chat.cost_usd
+                agent_cost_usd = chat.cost_usd
             else:
-                cost_usd = None
+                agent_cost_usd = None
+            cost_usd = (
+                (agent_cost_usd or 0.0) + context_cost_usd
+                if agent_cost_usd is not None or context_cost_usd
+                else None
+            )
 
             try:
                 action_str = extract_action(template, raw_prediction)
@@ -579,6 +596,8 @@ def run_episode(
                 "action": action_str, "parse_error": parse_error,
                 "prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens,
                 "latency_ms": latency_ms,
+                "agent_cost_usd": agent_cost_usd,
+                "context_cost_usd": context_cost_usd,
                 "cost_usd": cost_usd,
             }
             result_dict["steps"].append(step_dict)
