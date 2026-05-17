@@ -202,6 +202,8 @@ def _oracle_external_policy(
     oracle_states maps step number -> serialized oracle state string.
     Between oracle injections, falls back to identity (full history).
     """
+    global _LAST_POLICY_COST_USD
+
     if oracle_states is None:
         return serialize_trajectory(steps_so_far)
     current_t = len(steps_so_far)
@@ -211,6 +213,7 @@ def _oracle_external_policy(
         prompt_version = "v3"
         prompt = build_prompt(intent, steps_so_far, live_dom, current_t, version=prompt_version)
         result = call_oracle(prompt, use_stub=False)
+        _LAST_POLICY_COST_USD += result.get("cost_usd") or 0.0
         save_output(
             trajectory_id=str(task_id) if task_id is not None else "unknown",
             step=current_t,
