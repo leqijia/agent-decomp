@@ -102,7 +102,8 @@ def chat_completion(
 
     try:
         body = resp.json()
-        content = body["choices"][0]["message"]["content"]
+        message = body["choices"][0]["message"]
+        content = message.get("content") or ""
     except (ValueError, KeyError, IndexError) as e:
         raise OpenRouterError(
             f"Malformed OpenRouter response: {resp.text[:500]}"

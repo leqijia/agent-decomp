@@ -49,5 +49,6 @@ def openrouter_completion(
         model=model,
         temperature=temperature,
         max_tokens=max_tokens,
+        extra_body={"reasoning": {"enabled": False}},
         timeout_s=timeout_s,
     )
