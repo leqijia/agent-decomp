@@ -303,13 +303,14 @@ def run_stateact_episode(
                     prompt_tokens = None
                     completion_tokens = None
                     latency_ms = 0
+                    step_cost = None
                     parse_error = "api_error"
                     result.stop_reason = "crash"
                     result.steps.append(
                         _make_step_dict(
                             t, step_url, obs_truncated, "", raw_prediction,
                             "", parse_error, prompt_tokens, completion_tokens,
-                            latency_ms, None,
+                            latency_ms, None, cost_usd=step_cost,
                         )
                     )
                     result.total_steps = t
@@ -322,6 +323,7 @@ def run_stateact_episode(
                 prompt_tokens = chat.prompt_tokens
                 completion_tokens = chat.completion_tokens
                 latency_ms = chat.latency_ms
+                step_cost = chat.cost_usd
 
             state_json = _extract_state_json(raw_prediction, state_open, state_close)
             if state_json is not None:
@@ -346,7 +348,7 @@ def run_stateact_episode(
                 _make_step_dict(
                     t, step_url, obs_truncated, thought, raw_prediction,
                     action_str, parse_error, prompt_tokens, completion_tokens,
-                    latency_ms, state_json,
+                    latency_ms, state_json, cost_usd=step_cost,
                 )
             )
             result.total_steps = t
@@ -445,6 +447,7 @@ def _make_step_dict(
     completion_tokens: int | None,
     latency_ms: int,
     state_summary: dict | None,
+    cost_usd: float | None = None,
 ) -> dict[str, Any]:
     d = {
         "t": t,
@@ -458,6 +461,8 @@ def _make_step_dict(
         "completion_tokens": completion_tokens,
         "latency_ms": latency_ms,
     }
+    if cost_usd is not None:
+        d["cost_usd"] = cost_usd
     if state_summary is not None:
         d["state_summary"] = state_summary
     return d
