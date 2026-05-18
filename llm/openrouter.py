@@ -24,6 +24,15 @@ load_dotenv()
 _API_URL = "https://openrouter.ai/api/v1/chat/completions"
 _DEFAULT_TIMEOUT_S = 60
 
+# Conservative fallback prices in $/1M tokens, used only when OpenRouter
+# returns token counts but omits usage.cost. Caps should err on stopping early.
+_FALLBACK_PRICING = {
+    "qwen/qwen3.5-27b": {"input": 0.30, "output": 1.20},
+    "anthropic/claude-sonnet-4.6": {"input": 3.00, "output": 15.00},
+    "anthropic/claude-sonnet-4-6": {"input": 3.00, "output": 15.00},
+}
+_DEFAULT_FALLBACK_PRICING = {"input": 0.30, "output": 1.20}
+
 
 @dataclass
 class ChatResult:
@@ -46,6 +55,16 @@ def _api_key() -> str:
             "OPENROUTER_API_KEY is not set. Put it in .env or export it."
         )
     return key
+
+
+def _estimate_cost_usd(model: str, prompt_tokens: int | None, completion_tokens: int | None) -> float | None:
+    if prompt_tokens is None and completion_tokens is None:
+        return None
+    pricing = _FALLBACK_PRICING.get(model, _DEFAULT_FALLBACK_PRICING)
+    return (
+        ((prompt_tokens or 0) * pricing["input"])
+        + ((completion_tokens or 0) * pricing["output"])
+    ) / 1_000_000
 
 
 def chat_completion(
@@ -111,11 +130,17 @@ def chat_completion(
 
     usage = body.get("usage") or {}
     cost_raw = usage.get("cost")
-    cost_usd = float(cost_raw) if cost_raw is not None else None
+    prompt_tokens = usage.get("prompt_tokens")
+    completion_tokens = usage.get("completion_tokens")
+    cost_usd = (
+        float(cost_raw)
+        if cost_raw is not None
+        else _estimate_cost_usd(model, prompt_tokens, completion_tokens)
+    )
     return ChatResult(
         content=content,
-        prompt_tokens=usage.get("prompt_tokens"),
-        completion_tokens=usage.get("completion_tokens"),
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
         latency_ms=latency_ms,
         raw=body,
         cost_usd=cost_usd,
