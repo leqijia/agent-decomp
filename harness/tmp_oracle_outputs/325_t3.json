@@ -1,0 +1,37 @@
+{
+  "trajectory_id": "325",
+  "step": 3,
+  "prompt_version": "v3",
+  "input_tokens": 67856,
+  "output_tokens": 722,
+  "cost_usd": 0.214398,
+  "raw_response": "{\n  \"g\": \"Search for 'mouth night guard' listings and display them sorted by descending price\",\n  \"P_t\": [\n    \"Typed 'mouth night guard' into the search box\",\n    \"Search results page for 'mouth night guard' loaded successfully showing 9819 results\",\n    \"Opened the Sort By dropdown (combobox [2782]) to reveal sort options including 'Price' [3031]\",\n    \"Clicked the 'Price' menu item [3031] to select price as the sort criterion\"\n  ],\n  \"R_t\": [\n    \"Verify that sort order is set to descending (the direction switcher currently shows 'Set Ascending Direction' meaning current direction is descending by default, but needs confirmation after price sort is applied)\",\n    \"If the sort direction is ascending after selecting Price, click the direction switcher link to change to descending order\"\n  ],\n  \"e_t\": \"The page is the search results page for 'mouth night guard' at http://172.185.52.29:7770/catalogsearch/result/?q=mouth+night+guard. The ground-truth DOM shows the toolbar with a sort select element (id='sorter') where 'Relevance' is currently selected. The direction switcher link has class 'sort-desc' and title 'Set Ascending Direction', which in Magento means the current active direction is descending. The page shows 12 of 9819 results sorted by relevance. The agent has just clicked the 'Price' option [3031] in the sort combobox, but the DOM captured at step 3 still reflects the pre-click state with Relevance selected.\",\n  \"C\": [\n    \"Must use the existing search results page for 'mouth night guard' \u2014 do not navigate away or perform a new search\",\n    \"Sort must be by Price in descending order (highest price first)\"\n  ],\n  \"F_t\": [],\n  \"K_t\": [\n    \"The search query 'mouth night guard' returns 9819 results across multiple categories\",\n    \"The Sort By select element has id='sorter' with options: Product Name (value='name'), Price (value='price'), Relevance (value='relevance', currently selected)\",\n    \"The direction switcher link has class 'sort-desc' and data-value='asc', meaning clicking it would set ascending direction \u2014 the current default direction is descending\",\n    \"In Magento, the direction switcher link title 'Set Ascending Direction' means the current direction IS descending; clicking it would switch TO ascending\",\n    \"After selecting 'Price' as sort criterion, the direction should already be descending (desc) based on the toolbar configuration showing directionDefault='desc'\",\n    \"The toolbar form data shows: directionDefault='desc', orderDefault='relevance', meaning when switching to price sort, direction defaults to desc\",\n    \"The page URL for price descending sort would be: /catalogsearch/result/index/?product_list_dir=desc&product_list_order=price&q=mouth+night+guard\"\n  ]\n}",
+  "parsed": {
+    "g": "Search for 'mouth night guard' listings and display them sorted by descending price",
+    "P_t": [
+      "Typed 'mouth night guard' into the search box",
+      "Search results page for 'mouth night guard' loaded successfully showing 9819 results",
+      "Opened the Sort By dropdown (combobox [2782]) to reveal sort options including 'Price' [3031]",
+      "Clicked the 'Price' menu item [3031] to select price as the sort criterion"
+    ],
+    "R_t": [
+      "Verify that sort order is set to descending (the direction switcher currently shows 'Set Ascending Direction' meaning current direction is descending by default, but needs confirmation after price sort is applied)",
+      "If the sort direction is ascending after selecting Price, click the direction switcher link to change to descending order"
+    ],
+    "e_t": "The page is the search results page for 'mouth night guard' at http://172.185.52.29:7770/catalogsearch/result/?q=mouth+night+guard. The ground-truth DOM shows the toolbar with a sort select element (id='sorter') where 'Relevance' is currently selected. The direction switcher link has class 'sort-desc' and title 'Set Ascending Direction', which in Magento means the current active direction is descending. The page shows 12 of 9819 results sorted by relevance. The agent has just clicked the 'Price' option [3031] in the sort combobox, but the DOM captured at step 3 still reflects the pre-click state with Relevance selected.",
+    "C": [
+      "Must use the existing search results page for 'mouth night guard' \u2014 do not navigate away or perform a new search",
+      "Sort must be by Price in descending order (highest price first)"
+    ],
+    "F_t": [],
+    "K_t": [
+      "The search query 'mouth night guard' returns 9819 results across multiple categories",
+      "The Sort By select element has id='sorter' with options: Product Name (value='name'), Price (value='price'), Relevance (value='relevance', currently selected)",
+      "The direction switcher link has class 'sort-desc' and data-value='asc', meaning clicking it would set ascending direction \u2014 the current default direction is descending",
+      "In Magento, the direction switcher link title 'Set Ascending Direction' means the current direction IS descending; clicking it would switch TO ascending",
+      "After selecting 'Price' as sort criterion, the direction should already be descending (desc) based on the toolbar configuration showing directionDefault='desc'",
+      "The toolbar form data shows: directionDefault='desc', orderDefault='relevance', meaning when switching to price sort, direction defaults to desc",
+      "The page URL for price descending sort would be: /catalogsearch/result/index/?product_list_dir=desc&product_list_order=price&q=mouth+night+guard"
+    ]
+  }
+}

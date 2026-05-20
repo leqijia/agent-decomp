@@ -1,0 +1,21 @@
+Condition:   self_generated
+Model:       qwen/qwen3.5-27b
+Tasks:       1  (from --task-ids)
+Out dir:     experiments/smoke/audit_self_generated_1779135879
+Max steps:   1
+Action wait: 0.25s
+Thinking:    True
+Refreshing auth cookies ... done.
+[1/1] Running task 102 under condition=self_generated
+  => stop=max_steps | steps=1 | success=False | score=0.0
+Batch new/rerun result files: 1; reported new cost: $0.0000
+
+Done. 1 episodes under condition='self_generated'
+  success:  0
+  failure:  1
+  unscored: 0  (success is null -- crash / evaluator error)
+Trajectories written to experiments/smoke/audit_self_generated_1779135879/
+
+Next:
+  python scripts/build_condition_manifest.py --data-dir experiments/smoke/audit_self_generated_1779135879 --out-dir experiments/smoke --condition self_generated --experiment-id <exp_id>
+  python scripts/compute_condition_metrics.py --results experiments/smoke/results.json --out experiments/smoke/metrics.json
